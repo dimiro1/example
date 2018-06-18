@@ -44,7 +44,7 @@ func main() {
 		params.New(),
 		validator.New(),
 		binder.NewContentNegotiation(),
-		render.NewContentNegotiationRenderer(),
+		render.NewContentNegotiation(),
 		logger,
 	)
 	if err != nil {
