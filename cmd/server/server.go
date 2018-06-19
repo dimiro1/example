@@ -8,11 +8,11 @@ import (
 	"github.com/dimiro1/example/config"
 	"github.com/dimiro1/example/store"
 
-	"github.com/dimiro1/toolkit-defaults/binder"
-	"github.com/dimiro1/toolkit-defaults/params"
-	"github.com/dimiro1/toolkit-defaults/render"
-	"github.com/dimiro1/toolkit-defaults/router"
-	"github.com/dimiro1/toolkit-defaults/validator"
+	"github.com/dimiro1/example/toolkit-defaults/binder"
+	"github.com/dimiro1/example/toolkit-defaults/params"
+	"github.com/dimiro1/example/toolkit-defaults/render"
+	"github.com/dimiro1/example/toolkit-defaults/router"
+	"github.com/dimiro1/example/toolkit-defaults/validator"
 
 	// database driver
 	"github.com/jinzhu/gorm"
@@ -67,7 +67,7 @@ func main() {
 		logger,
 
 		router.New(),
-		params.New(),
+		params.NewGorilla(),
 		validator.New(),
 		binder.NewContentNegotiation(),
 		render.NewContentNegotiation(),

@@ -24,15 +24,6 @@
 #   go-tests = true
 #   unused-packages = true
 
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/dimiro1/toolkit"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/dimiro1/toolkit-defaults"
-
 [[constraint]]
   name = "github.com/jinzhu/gorm"
   version = "1.9.1"

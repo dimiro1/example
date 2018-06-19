@@ -9,12 +9,12 @@ import (
 	"github.com/dimiro1/example/config"
 	"github.com/dimiro1/example/store"
 
-	"github.com/dimiro1/toolkit/binder"
-	"github.com/dimiro1/toolkit/migration"
-	"github.com/dimiro1/toolkit/params"
-	"github.com/dimiro1/toolkit/render"
-	"github.com/dimiro1/toolkit/router"
-	"github.com/dimiro1/toolkit/validator"
+	"github.com/dimiro1/example/toolkit/binder"
+	"github.com/dimiro1/example/toolkit/migration"
+	"github.com/dimiro1/example/toolkit/params"
+	"github.com/dimiro1/example/toolkit/render"
+	"github.com/dimiro1/example/toolkit/router"
+	"github.com/dimiro1/example/toolkit/validator"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -171,16 +171,16 @@ func (a *Application) RegisterRoutes() router.Router {
 	// See: https://golang.org/pkg/sync/#Once
 	a.onceRegisterRoutes.Do(func() {
 		// handlers returning functions, making easier to pass extra parameters
-		a.router.Get("/", a.index())
+		a.router.HandleFunc("GET", "/", a.index())
 
 		// Recipes resource
-		a.router.Get("/recipes", a.listRecipes())
-		a.router.Post("/recipes", a.createRecipe())
-		a.router.Get("/recipes/{id:[0-9]+}", a.readRecipe())
-		a.router.Put("/recipes/{id:[0-9]+}", a.updateRecipe())
-		a.router.Delete("/recipes/{id:[0-9]+}", a.deleteRecipe())
-		a.router.Get("/recipes/{id:[0-9]+}/recommendations", a.listRecommendations())
-		a.router.Get("/recipes/search", a.searchRecipes())
+		a.router.HandleFunc("GET", "/recipes", a.listRecipes())
+		a.router.HandleFunc("POST", "/recipes", a.createRecipe())
+		a.router.HandleFunc("GET", "/recipes/{id:[0-9]+}", a.readRecipe())
+		a.router.HandleFunc("PUT", "/recipes/{id:[0-9]+}", a.updateRecipe())
+		a.router.HandleFunc("DELETE", "/recipes/{id:[0-9]+}", a.deleteRecipe())
+		a.router.HandleFunc("GET", "/recipes/{id:[0-9]+}/recommendations", a.listRecommendations())
+		a.router.HandleFunc("GET", "/recipes/search", a.searchRecipes())
 	})
 
 	return a.router

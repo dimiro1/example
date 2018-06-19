@@ -4,27 +4,13 @@
 [[projects]]
   branch = "master"
   name = "github.com/dimiro1/toolkit"
-  packages = [
-    "binder",
-    "migration",
-    "params",
-    "render",
-    "router",
-    "validator"
-  ]
+  packages = ["validator"]
   revision = "49e7c780157fcc82dda031a725bce5d4a0e16be1"
 
 [[projects]]
   branch = "master"
   name = "github.com/dimiro1/toolkit-defaults"
-  packages = [
-    "binder",
-    "internal/contenttype",
-    "params",
-    "render",
-    "router",
-    "validator"
-  ]
+  packages = ["internal/contenttype"]
   revision = "d439f7de528f688204d95babc16794ceee91f332"
 
 [[projects]]
@@ -93,6 +79,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5d061a6af2abf570c7ea54c1535da26cae54e35f61c8e84f609956b529c3a4c1"
+  inputs-digest = "a1f85010f357cae0e27f4fd8f805977ef586fb44adf63e15b382522ef42e7466"
   solver-name = "gps-cdcl"
   solver-version = 1
