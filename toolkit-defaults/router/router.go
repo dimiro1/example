@@ -10,7 +10,7 @@ type Gorilla struct {
 	mux *mux.Router
 }
 
-func New() *Gorilla {
+func NewGorilla() *Gorilla {
 	return &Gorilla{
 		mux: mux.NewRouter(),
 	}

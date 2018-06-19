@@ -6,18 +6,18 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type DBMigrator struct {
+type GormMigrator struct {
 	db *gorm.DB
 }
 
-func (d *DBMigrator) Migrate() error {
+func (d *GormMigrator) Migrate() error {
 	return d.db.AutoMigrate(Recipe{}).Error
 }
 
-func NewDBMigrator(db *gorm.DB) (*DBMigrator, error) {
+func NewGormMigrator(db *gorm.DB) (*GormMigrator, error) {
 	if db == nil {
 		return nil, errors.New("store: db *gorm.DB is nil")
 	}
 
-	return &DBMigrator{db}, nil
+	return &GormMigrator{db}, nil
 }

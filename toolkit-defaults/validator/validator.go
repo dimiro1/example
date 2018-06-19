@@ -4,12 +4,12 @@ import (
 	"github.com/dimiro1/example/toolkit/validator"
 )
 
-type Default struct{}
+type Simple struct{}
 
-func (Default) Validate(v validator.CanBeValidated) (bool, error) {
+func (Simple) Validate(v validator.CanBeValidated) (bool, error) {
 	return v.IsValid()
 }
 
-func New() Default {
-	return Default{}
+func NewSimple() Simple {
+	return Simple{}
 }

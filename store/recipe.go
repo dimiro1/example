@@ -41,18 +41,18 @@ type RecipeUpdater interface {
 }
 
 // Implementation using GORM database ORM
-type DBRecipesStore struct {
+type GormRecipesStore struct {
 	db *gorm.DB
 }
 
-func NewDBRecipesStore(db *gorm.DB) (*DBRecipesStore, error) {
+func NewGormRecipesStore(db *gorm.DB) (*GormRecipesStore, error) {
 	if db == nil {
 		return nil, errors.New("store: db *gorm.DB is nil")
 	}
-	return &DBRecipesStore{db}, nil
+	return &GormRecipesStore{db}, nil
 }
 
-func (d *DBRecipesStore) Update(r *Recipe) error {
+func (d *GormRecipesStore) Update(r *Recipe) error {
 	err := d.db.Model(Recipe{}).Update(r).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return ErrRecipeNotFound
@@ -61,11 +61,11 @@ func (d *DBRecipesStore) Update(r *Recipe) error {
 	return err
 }
 
-func (d *DBRecipesStore) Insert(r *Recipe) error {
+func (d *GormRecipesStore) Insert(r *Recipe) error {
 	return d.db.Model(Recipe{}).Create(r).Error
 }
 
-func (d *DBRecipesStore) Find(ID uint) (*Recipe, error) {
+func (d *GormRecipesStore) Find(ID uint) (*Recipe, error) {
 	var err error
 	r := &Recipe{}
 
@@ -77,14 +77,14 @@ func (d *DBRecipesStore) Find(ID uint) (*Recipe, error) {
 }
 
 // TODO: Pagination
-func (d *DBRecipesStore) All() ([]*Recipe, error) {
+func (d *GormRecipesStore) All() ([]*Recipe, error) {
 	var recipes []*Recipe
 	err := d.db.Find(recipes).Error
 	return recipes, err
 }
 
 // TODO: Pagination
-func (d *DBRecipesStore) Search(query string) ([]*Recipe, error) {
+func (d *GormRecipesStore) Search(query string) ([]*Recipe, error) {
 	var recipes []*Recipe
 	err := d.db.Where("name LIKE ?", fmt.Sprintf("%%%s%%", query)).Find(recipes).Error
 	return recipes, err

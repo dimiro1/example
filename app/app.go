@@ -20,12 +20,16 @@ import (
 )
 
 // Application holds the application dependencies
+//
+// You can have any kind of dependency, but, prefer to use interfaces
+// it will make your life easier while writing unit tests
 type Application struct {
 	// Application external configuration
 	config *config.Config
 	logger *log.Entry
 
 	// Database interfaces/repositories
+	// Separate into smaller interfaces is a good practice, which allows you to easily write unit tests
 	recipeInserter store.RecipeInserter
 	recipeFinder   store.RecipeFinder
 	recipeSearcher store.RecipeSearcher
@@ -51,6 +55,7 @@ type Application struct {
 	renderer render.Renderer
 
 	// Error renderer
+	// This is completely optional, your default renderer can have logic to handle errors
 	errorRenderer render.Renderer
 
 	// Database migrations
@@ -83,55 +88,55 @@ func NewApplication(
 	recipeLister store.RecipeLister) (*Application, error) {
 
 	if config == nil {
-		return nil, errors.New("app: config is nil")
+		return nil, errors.New("app: config cannot be nil")
 	}
 
 	if logger == nil {
-		return nil, errors.New("app: logger is nil")
+		return nil, errors.New("app: logger cannot be nil")
 	}
 
 	if router == nil {
-		return nil, errors.New("app: router is nil")
+		return nil, errors.New("app: router cannot be nil")
 	}
 
 	if params == nil {
-		return nil, errors.New("app: params is nil")
+		return nil, errors.New("app: params cannot be nil")
 	}
 
 	if validator == nil {
-		return nil, errors.New("app: validator is nil")
+		return nil, errors.New("app: validator cannot be nil")
 	}
 
 	if binder == nil {
-		return nil, errors.New("app: binder is nil")
+		return nil, errors.New("app: binder cannot be nil")
 	}
 
 	if renderer == nil {
-		return nil, errors.New("app: renderer is nil")
+		return nil, errors.New("app: renderer cannot be nil")
 	}
 
 	if migrator == nil {
-		return nil, errors.New("app: migrator is nil")
+		return nil, errors.New("app: migrator cannot be nil")
 	}
 
 	if recipeInserter == nil {
-		return nil, errors.New("app: recipeInserter is nil")
+		return nil, errors.New("app: recipeInserter cannot be nil")
 	}
 
 	if recipeFinder == nil {
-		return nil, errors.New("app: recipeFinder is nil")
+		return nil, errors.New("app: recipeFinder cannot be nil")
 	}
 
 	if recipeSearcher == nil {
-		return nil, errors.New("app: recipeSearcher is nil")
+		return nil, errors.New("app: recipeSearcher cannot be nil")
 	}
 
 	if recipeUpdater == nil {
-		return nil, errors.New("app: recipeUpdater is nil")
+		return nil, errors.New("app: recipeUpdater cannot be nil")
 	}
 
 	if recipeLister == nil {
-		return nil, errors.New("app: recipeLister is nil")
+		return nil, errors.New("app: recipeLister cannot be nil")
 	}
 
 	a := &Application{

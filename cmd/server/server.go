@@ -51,12 +51,12 @@ func main() {
 	}
 	defer db.Close()
 
-	recipeStore, err := store.NewDBRecipesStore(db)
+	recipeStore, err := store.NewGormRecipesStore(db)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create recipe store")
 	}
 
-	migrator, err := store.NewDBMigrator(db)
+	migrator, err := store.NewGormMigrator(db)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create db migrator")
 	}
@@ -66,9 +66,9 @@ func main() {
 		cfg,
 		logger,
 
-		router.New(),
+		router.NewGorilla(),
 		params.NewGorilla(),
-		validator.New(),
+		validator.NewSimple(),
 		binder.NewContentNegotiation(),
 		render.NewContentNegotiation(),
 		migrator,
