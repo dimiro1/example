@@ -6,13 +6,16 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/dimiro1/toolkit/router"
-	"github.com/dimiro1/toolkit/render"
-	"github.com/dimiro1/toolkit/validator"
-	"github.com/dimiro1/toolkit/binder"
-	"github.com/dimiro1/toolkit/params"
-
 	"github.com/dimiro1/example/config"
+	"github.com/dimiro1/example/store"
+
+	"github.com/dimiro1/toolkit/binder"
+	"github.com/dimiro1/toolkit/migration"
+	"github.com/dimiro1/toolkit/params"
+	"github.com/dimiro1/toolkit/render"
+	"github.com/dimiro1/toolkit/router"
+	"github.com/dimiro1/toolkit/validator"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,6 +26,11 @@ type Application struct {
 	logger *log.Entry
 
 	// Database interfaces/repositories
+	recipeInserter store.RecipeInserter
+	recipeFinder   store.RecipeFinder
+	recipeSearcher store.RecipeSearcher
+	recipeUpdater  store.RecipeUpdater
+	recipeLister   store.RecipeLister
 
 	// html templates
 	// Cache interface
@@ -42,6 +50,12 @@ type Application struct {
 	// Renderer
 	renderer render.Renderer
 
+	// Error renderer
+	errorRenderer render.Renderer
+
+	// Database migrations
+	migrator migration.Migrator
+
 	// Mux, you are free to use any other router library
 	router router.Router
 
@@ -53,15 +67,27 @@ type Application struct {
 // NewApplication returns a pointer to an Application struct
 func NewApplication(
 	config *config.Config,
+	logger *log.Entry,
+
 	router router.Router,
 	params params.ParamReader,
 	validator validator.Validator,
 	binder binder.Binder,
 	renderer render.Renderer,
-	logger *log.Entry) (*Application, error) {
+	migrator migration.Migrator,
+
+	recipeInserter store.RecipeInserter,
+	recipeFinder store.RecipeFinder,
+	recipeSearcher store.RecipeSearcher,
+	recipeUpdater store.RecipeUpdater,
+	recipeLister store.RecipeLister) (*Application, error) {
 
 	if config == nil {
 		return nil, errors.New("app: config is nil")
+	}
+
+	if logger == nil {
+		return nil, errors.New("app: logger is nil")
 	}
 
 	if router == nil {
@@ -84,18 +110,47 @@ func NewApplication(
 		return nil, errors.New("app: renderer is nil")
 	}
 
-	if logger == nil {
-		return nil, errors.New("app: logger is nil")
+	if migrator == nil {
+		return nil, errors.New("app: migrator is nil")
+	}
+
+	if recipeInserter == nil {
+		return nil, errors.New("app: recipeInserter is nil")
+	}
+
+	if recipeFinder == nil {
+		return nil, errors.New("app: recipeFinder is nil")
+	}
+
+	if recipeSearcher == nil {
+		return nil, errors.New("app: recipeSearcher is nil")
+	}
+
+	if recipeUpdater == nil {
+		return nil, errors.New("app: recipeUpdater is nil")
+	}
+
+	if recipeLister == nil {
+		return nil, errors.New("app: recipeLister is nil")
 	}
 
 	a := &Application{
-		config:    config,
-		router:    router,
-		params:    params,
-		validator: validator,
-		binder:    binder,
-		renderer:  renderer,
-		logger:    logger,
+		config: config,
+		logger: logger,
+
+		router:        router,
+		params:        params,
+		validator:     validator,
+		binder:        binder,
+		renderer:      renderer,
+		migrator:      migrator,
+		errorRenderer: renderer, // using the same renderer
+
+		recipeInserter: recipeInserter,
+		recipeFinder:   recipeFinder,
+		recipeSearcher: recipeSearcher,
+		recipeUpdater:  recipeUpdater,
+		recipeLister:   recipeLister,
 	}
 
 	return a, nil
@@ -103,25 +158,32 @@ func NewApplication(
 
 // RunMigrations run needed migrations
 func (a *Application) RunMigrations() error {
+	var err error
 	a.onceRunMigrations.Do(func() {
-		// TODO: Run migrations
-		// Consider using github.com/dimiro1/darwin
-		// you can load migrations from filesystem
-		// or having directly on code
+		err = a.migrator.Migrate()
 	})
-	return nil
+	return err
 }
 
 // Initialize the routes
-func (a *Application) RegisterRoutes() error {
+func (a *Application) RegisterRoutes() router.Router {
 	// Make sure that we configure the handlers only once
 	// See: https://golang.org/pkg/sync/#Once
 	a.onceRegisterRoutes.Do(func() {
 		// handlers returning functions, making easier to pass extra parameters
 		a.router.Get("/", a.index())
+
+		// Recipes resource
+		a.router.Get("/recipes", a.listRecipes())
+		a.router.Post("/recipes", a.createRecipe())
+		a.router.Get("/recipes/{id:[0-9]+}", a.readRecipe())
+		a.router.Put("/recipes/{id:[0-9]+}", a.updateRecipe())
+		a.router.Delete("/recipes/{id:[0-9]+}", a.deleteRecipe())
+		a.router.Get("/recipes/{id:[0-9]+}/recommendations", a.listRecommendations())
+		a.router.Get("/recipes/search", a.searchRecipes())
 	})
 
-	return nil
+	return a.router
 }
 
 // Start is responsible to bind to start the application
@@ -135,10 +197,12 @@ func (a *Application) Start() error {
 	// Running migrations if necessary
 	a.logger.Info("Running migrations...")
 	a.RunMigrations()
+	a.logger.Info("Finished Running migrations...")
 
 	// Initializing routes
 	a.logger.Info("Registering routes...")
 	a.RegisterRoutes()
+	a.logger.Info("Finished Registering routes...")
 
 	// This is the only way to safely start a http server
 	// The ListenAndServe does not set timeouts

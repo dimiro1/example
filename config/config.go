@@ -2,6 +2,7 @@ package config
 
 import (
 	"time"
+
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -12,8 +13,9 @@ type Timeouts struct {
 }
 
 type Config struct {
-	Env  string `envconfig:"ENV"`
-	Port uint   `envconfig:"PORT"`
+	Env         string `envconfig:"ENV"`
+	Port        uint   `envconfig:"PORT"`
+	DatabaseDSN string `envconfig:"DATABASE_DSN"`
 
 	Timeouts Timeouts
 }
@@ -24,8 +26,9 @@ func NewConfig() *Config {
 		// We can add defaults here
 		// You can use the envconfig library to set the defaults as well
 		// But it only works for Exported fields
-		Env:  "development",
-		Port: 5000,
+		Env:         "development",
+		Port:        5000,
+		DatabaseDSN: ":memory:",
 		Timeouts: Timeouts{
 			ReadTimeout:  time.Second * 5,
 			WriteTimeout: time.Second * 5,
