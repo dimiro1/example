@@ -2,18 +2,6 @@
 
 
 [[projects]]
-  branch = "master"
-  name = "github.com/dimiro1/toolkit"
-  packages = ["validator"]
-  revision = "49e7c780157fcc82dda031a725bce5d4a0e16be1"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/dimiro1/toolkit-defaults"
-  packages = ["internal/contenttype"]
-  revision = "d439f7de528f688204d95babc16794ceee91f332"
-
-[[projects]]
   name = "github.com/gorilla/context"
   packages = ["."]
   revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
@@ -74,11 +62,11 @@
     "unix",
     "windows"
   ]
-  revision = "6c888cc515d3ed83fc103cf1d84468aad274b0a7"
+  revision = "fc8bd948cf46f9c7af0f07d34151ce25fe90e477"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a1f85010f357cae0e27f4fd8f805977ef586fb44adf63e15b382522ef42e7466"
+  inputs-digest = "62147e84c0eca340df6dddce42f876815974216b1eb98b29dc600d7ea82acd6d"
   solver-name = "gps-cdcl"
   solver-version = 1
