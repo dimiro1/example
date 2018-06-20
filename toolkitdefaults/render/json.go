@@ -7,7 +7,7 @@ import (
 
 type JSON struct{}
 
-func (JSON) Render(w http.ResponseWriter, r *http.Request, status int, i interface{}) error {
+func (JSON) Render(w http.ResponseWriter, status int, i interface{}, extra ...interface{}) error {
 	switch i.(type) {
 	case error:
 		i = struct {

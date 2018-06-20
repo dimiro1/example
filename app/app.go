@@ -17,6 +17,7 @@ import (
 	"github.com/dimiro1/example/toolkit/validator"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/dimiro1/example/toolkit/contenttype"
 )
 
 // Application holds the application dependencies
@@ -46,17 +47,18 @@ type Application struct {
 	validator validator.Validator
 
 	// Bind struct with data from the request
-	binder binder.Binder
+	jsonBinder binder.Binder
+	xmlBinder  binder.Binder
 
 	// URL parameters extractor
 	params params.ParamReader
 
 	// Renderer
-	renderer render.Renderer
+	xmlRenderer  render.Renderer
+	jsonRenderer render.Renderer
 
-	// Error renderer
-	// This is completely optional, your default renderer can have logic to handle errors
-	errorRenderer render.Renderer
+	// Detect content type
+	contentType contenttype.Detector
 
 	// Database migrations
 	migrator migration.Migrator
@@ -77,8 +79,13 @@ func NewApplication(
 	router router.Router,
 	params params.ParamReader,
 	validator validator.Validator,
-	binder binder.Binder,
-	renderer render.Renderer,
+	jsonBinder binder.Binder,
+	xmlBinder binder.Binder,
+	jsonRenderer render.Renderer,
+	xmlRenderer render.Renderer,
+
+	contentType contenttype.Detector,
+
 	migrator migration.Migrator,
 
 	recipeInserter store.RecipeInserter,
@@ -107,12 +114,24 @@ func NewApplication(
 		return nil, errors.New("app: validator cannot be nil")
 	}
 
-	if binder == nil {
-		return nil, errors.New("app: binder cannot be nil")
+	if jsonBinder == nil {
+		return nil, errors.New("app: jsonBinder cannot be nil")
 	}
 
-	if renderer == nil {
-		return nil, errors.New("app: renderer cannot be nil")
+	if xmlBinder == nil {
+		return nil, errors.New("app: xmlBinder cannot be nil")
+	}
+
+	if jsonRenderer == nil {
+		return nil, errors.New("app: jsonRenderer cannot be nil")
+	}
+
+	if xmlRenderer == nil {
+		return nil, errors.New("app: xmlRenderer cannot be nil")
+	}
+
+	if contentType == nil {
+		return nil, errors.New("app: contentType cannot be nil")
 	}
 
 	if migrator == nil {
@@ -143,13 +162,15 @@ func NewApplication(
 		config: config,
 		logger: logger,
 
-		router:        router,
-		params:        params,
-		validator:     validator,
-		binder:        binder,
-		renderer:      renderer,
-		migrator:      migrator,
-		errorRenderer: renderer, // using the same renderer
+		router:       router,
+		params:       params,
+		validator:    validator,
+		jsonBinder:   jsonBinder,
+		xmlBinder:    xmlBinder,
+		jsonRenderer: jsonRenderer,
+		xmlRenderer:  xmlRenderer,
+		contentType:  contentType,
+		migrator:     migrator,
 
 		recipeInserter: recipeInserter,
 		recipeFinder:   recipeFinder,
@@ -170,7 +191,7 @@ func (a *Application) RunMigrations() error {
 	return err
 }
 
-// Initialize the routes
+// RegisterRoutes Initialize the routes
 func (a *Application) RegisterRoutes() router.Router {
 	// Make sure that we configure the handlers only once
 	// See: https://golang.org/pkg/sync/#Once

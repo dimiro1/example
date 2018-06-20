@@ -1,10 +1,13 @@
 package app
 
 import (
+	"encoding/xml"
 	"net/http"
 	"strconv"
 
 	"github.com/dimiro1/example/store"
+	ct "github.com/dimiro1/example/toolkit/contenttype"
+	"github.com/dimiro1/example/toolkit/render"
 )
 
 // GET /recipes
@@ -12,10 +15,10 @@ func (a *Application) listRecipes() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		recipes, err := a.recipeLister.All()
 		if err != nil {
-			a.errorRenderer.Render(w, r, http.StatusInternalServerError, err)
+			a.jsonRenderer.Render(w, http.StatusInternalServerError, err)
 			return
 		}
-		a.renderer.Render(w, r, http.StatusOK, recipes)
+		a.jsonRenderer.Render(w, http.StatusOK, recipes)
 	})
 }
 
@@ -26,56 +29,95 @@ func (a *Application) createRecipe() http.HandlerFunc {
 		// Bind
 		// Validate
 		// Logic
-		a.renderer.Render(w, r, http.StatusOK, "createRecipe")
+		a.jsonRenderer.Render(w, http.StatusOK, "createRecipe")
 	})
 }
 
 // DELETE /recipes/{id}
 func (a *Application) deleteRecipe() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.renderer.Render(w, r, http.StatusOK, "deleteRecipe")
+		a.jsonRenderer.Render(w, http.StatusOK, "deleteRecipe")
 	})
 }
 
 // UPDATE /recipes/{id}
 func (a *Application) updateRecipe() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.renderer.Render(w, r, http.StatusOK, "updateRecipe")
+		a.jsonRenderer.Render(w, http.StatusOK, "updateRecipe")
 	})
 }
 
 // GET /recipes/{id}
 func (a *Application) readRecipe() http.HandlerFunc {
+	// If the struct is only used inside one handler
+	// that is fine to declare it here
+	// Note: Do not use store/db entities as input or output
+	// TODO: Move to it's own file
+	type recipeResponse struct {
+		ID          string `json:"id"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+
+	// TODO: Move to it's own file
+	type errorResponse struct {
+		XMLName xml.Name `json:"-" xml:"error"`
+		Message string   `json:"message" xml:"message,attr"`
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var renderer render.Renderer
+
+		// Content negotiation
+		a.contentType.Detect(r, func(t string) {
+			switch t {
+			case ct.XML:
+				renderer = a.xmlRenderer
+			case ct.JSON:
+				renderer = a.jsonRenderer
+			}
+		})
+
 		id, err := strconv.ParseUint(a.params.ByName(r, "id"), 10, 0)
 		if err != nil {
-			a.errorRenderer.Render(w, r, http.StatusBadRequest, "id must be a positive number")
+			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "id must be a positive number"})
 			return
 		}
 
-		recipes, err := a.recipeFinder.Find(uint(id))
-		if err == store.ErrRecipeNotFound {
-			// TODO: Use a response struct
-			a.errorRenderer.Render(w, r, http.StatusNotFound, "Not Found")
-			return
-		} else {
-			a.errorRenderer.Render(w, r, http.StatusInternalServerError, err)
+		storeRecipe, err := a.recipeFinder.Find(uint(id))
+		if err != nil {
+			var message string
+			var status int
+			if err == store.ErrRecipeNotFound {
+				message = "Not Found"
+				status = http.StatusNotFound
+			} else {
+				message = "Internal Server Error"
+				status = http.StatusInternalServerError
+			}
+
+			renderer.Render(w, status, errorResponse{Message: message})
 			return
 		}
-		a.renderer.Render(w, r, http.StatusOK, recipes)
+
+		renderer.Render(w, http.StatusOK, recipeResponse{
+			ID:          strconv.FormatUint(id, 10),
+			Name:        storeRecipe.Name,
+			Description: storeRecipe.Description,
+		}, nil)
 	})
 }
 
 // GET /recipes/search
 func (a *Application) searchRecipes() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.renderer.Render(w, r, http.StatusOK, "searchRecipes")
+		a.jsonRenderer.Render(w, http.StatusOK, "searchRecipes")
 	})
 }
 
 // GET /recipes/{id}/recommendations
 func (a *Application) listRecommendations() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.renderer.Render(w, r, http.StatusOK, "listRecommendations")
+		a.jsonRenderer.Render(w, http.StatusOK, "listRecommendations")
 	})
 }

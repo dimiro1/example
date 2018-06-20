@@ -1,10 +1,12 @@
 package render
 
 import (
-	`net/http`
+	"net/http"
 )
 
+// Renderer ...
 type Renderer interface {
-	Render(w http.ResponseWriter, r *http.Request, status int, data interface{}) error
+	// Render ...
+	// extra can be used to carry context data for HTML or text templates
+	Render(w http.ResponseWriter, status int, data interface{}, extra ...interface{}) error
 }
-

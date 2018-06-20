@@ -8,16 +8,17 @@ import (
 	"github.com/dimiro1/example/config"
 	"github.com/dimiro1/example/store"
 
-	"github.com/dimiro1/example/toolkit-defaults/binder"
-	"github.com/dimiro1/example/toolkit-defaults/params"
-	"github.com/dimiro1/example/toolkit-defaults/render"
-	"github.com/dimiro1/example/toolkit-defaults/router"
-	"github.com/dimiro1/example/toolkit-defaults/validator"
+	"github.com/dimiro1/example/toolkitdefaults/binder"
+	"github.com/dimiro1/example/toolkitdefaults/params"
+	"github.com/dimiro1/example/toolkitdefaults/render"
+	"github.com/dimiro1/example/toolkitdefaults/router"
+	"github.com/dimiro1/example/toolkitdefaults/validator"
 
 	// database driver
 	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
+	"github.com/dimiro1/example/toolkitdefaults/contenttype"
 )
 
 func main() {
@@ -69,8 +70,11 @@ func main() {
 		router.NewGorilla(),
 		params.NewGorilla(),
 		validator.NewSimple(),
-		binder.NewContentNegotiation(),
-		render.NewContentNegotiation(),
+		binder.JSON{},
+		binder.XML{},
+		render.JSON{},
+		render.XML{},
+		contenttype.Detector{},
 		migrator,
 
 		// Stores
