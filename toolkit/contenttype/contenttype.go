@@ -9,11 +9,12 @@ const (
 	XML   = "xml"
 	PLAIN = "text"
 	HTML  = "html"
+	ANY   = "any"
 
 	// more ...
 )
 
 // Detector ...
 type Detector interface {
-	Detect(r *http.Request, f func(theType string))
+	Detect(r *http.Request) string
 }

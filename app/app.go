@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -18,6 +17,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/dimiro1/example/toolkit/contenttype"
+	"github.com/dimiro1/example/toolkit/dict"
 )
 
 // Application holds the application dependencies
@@ -54,8 +54,8 @@ type Application struct {
 	params params.ParamReader
 
 	// Renderer
-	xmlRenderer  render.Renderer
-	jsonRenderer render.Renderer
+	xml  render.Renderer
+	json render.Renderer
 
 	// Detect content type
 	contentType contenttype.Detector
@@ -81,11 +81,9 @@ func NewApplication(
 	validator validator.Validator,
 	jsonBinder binder.Binder,
 	xmlBinder binder.Binder,
-	jsonRenderer render.Renderer,
-	xmlRenderer render.Renderer,
-
+	json render.Renderer,
+	xml render.Renderer,
 	contentType contenttype.Detector,
-
 	migrator migration.Migrator,
 
 	recipeInserter store.RecipeInserter,
@@ -94,83 +92,41 @@ func NewApplication(
 	recipeUpdater store.RecipeUpdater,
 	recipeLister store.RecipeLister) (*Application, error) {
 
-	if config == nil {
-		return nil, errors.New("app: config cannot be nil")
-	}
-
-	if logger == nil {
-		return nil, errors.New("app: logger cannot be nil")
-	}
-
-	if router == nil {
-		return nil, errors.New("app: router cannot be nil")
-	}
-
-	if params == nil {
-		return nil, errors.New("app: params cannot be nil")
-	}
-
-	if validator == nil {
-		return nil, errors.New("app: validator cannot be nil")
-	}
-
-	if jsonBinder == nil {
-		return nil, errors.New("app: jsonBinder cannot be nil")
-	}
-
-	if xmlBinder == nil {
-		return nil, errors.New("app: xmlBinder cannot be nil")
-	}
-
-	if jsonRenderer == nil {
-		return nil, errors.New("app: jsonRenderer cannot be nil")
-	}
-
-	if xmlRenderer == nil {
-		return nil, errors.New("app: xmlRenderer cannot be nil")
-	}
-
-	if contentType == nil {
-		return nil, errors.New("app: contentType cannot be nil")
-	}
-
-	if migrator == nil {
-		return nil, errors.New("app: migrator cannot be nil")
-	}
-
-	if recipeInserter == nil {
-		return nil, errors.New("app: recipeInserter cannot be nil")
-	}
-
-	if recipeFinder == nil {
-		return nil, errors.New("app: recipeFinder cannot be nil")
-	}
-
-	if recipeSearcher == nil {
-		return nil, errors.New("app: recipeSearcher cannot be nil")
-	}
-
-	if recipeUpdater == nil {
-		return nil, errors.New("app: recipeUpdater cannot be nil")
-	}
-
-	if recipeLister == nil {
-		return nil, errors.New("app: recipeLister cannot be nil")
+	// make it simple to test all the parameters
+	if err := anyNil(dict.M{
+		"config":         config,
+		"logger":         logger,
+		"router":         router,
+		"params":         params,
+		"validator":      validator,
+		"jsonBinder":     jsonBinder,
+		"xmlBinder":      xmlBinder,
+		"json":           json,
+		"xml":            xml,
+		"contentType":    contentType,
+		"migrator":       migrator,
+		"recipeInserter": recipeInserter,
+		"recipeFinder":   recipeFinder,
+		"recipeSearcher": recipeSearcher,
+		"recipeUpdater":  recipeUpdater,
+		"recipeLister":   recipeLister,
+	}); err != nil {
+		return nil, err
 	}
 
 	a := &Application{
 		config: config,
 		logger: logger,
 
-		router:       router,
-		params:       params,
-		validator:    validator,
-		jsonBinder:   jsonBinder,
-		xmlBinder:    xmlBinder,
-		jsonRenderer: jsonRenderer,
-		xmlRenderer:  xmlRenderer,
-		contentType:  contentType,
-		migrator:     migrator,
+		router:      router,
+		params:      params,
+		validator:   validator,
+		jsonBinder:  jsonBinder,
+		xmlBinder:   xmlBinder,
+		json:        json,
+		xml:         xml,
+		contentType: contentType,
+		migrator:    migrator,
 
 		recipeInserter: recipeInserter,
 		recipeFinder:   recipeFinder,
@@ -205,7 +161,6 @@ func (a *Application) RegisterRoutes() router.Router {
 		a.router.HandleFunc("GET", "/recipes/{id:[0-9]+}", a.readRecipe())
 		a.router.HandleFunc("PUT", "/recipes/{id:[0-9]+}", a.updateRecipe())
 		a.router.HandleFunc("DELETE", "/recipes/{id:[0-9]+}", a.deleteRecipe())
-		a.router.HandleFunc("GET", "/recipes/{id:[0-9]+}/recommendations", a.listRecommendations())
 		a.router.HandleFunc("GET", "/recipes/search", a.searchRecipes())
 	})
 
@@ -220,15 +175,19 @@ func (a *Application) Start() error {
 
 	a.logger.Infof("starting application...")
 
-	// Running migrations if necessary
-	a.logger.Info("Running migrations...")
-	a.RunMigrations()
-	a.logger.Info("Finished Running migrations...")
+	if a.config.RunMigrations {
+		a.logger.Info("running migrations...")
+		if err := a.RunMigrations(); err != nil {
+			a.logger.Error("error running migrations")
+			return err
+		}
+		a.logger.Info("finished Running migrations...")
+	}
 
 	// Initializing routes
-	a.logger.Info("Registering routes...")
+	a.logger.Info("registering routes...")
 	a.RegisterRoutes()
-	a.logger.Info("Finished Registering routes...")
+	a.logger.Info("finished Registering routes...")
 
 	// This is the only way to safely start a http server
 	// The ListenAndServe does not set timeouts
@@ -244,6 +203,15 @@ func (a *Application) Start() error {
 	if err != nil {
 		a.logger.WithField("address", address).Error("error serving HTTP")
 		return err
+	}
+	return nil
+}
+
+func anyNil(items dict.M) error {
+	for k, v := range items {
+		if v == nil {
+			return fmt.Errorf("app: %s cannot be nil", k)
+		}
 	}
 	return nil
 }

@@ -7,17 +7,17 @@ import (
 
 type JSON struct{}
 
-func (JSON) Render(w http.ResponseWriter, status int, i interface{}, extra ...interface{}) error {
-	switch i.(type) {
+func (JSON) Render(w http.ResponseWriter, status int, toRender interface{}, context ...interface{}) error {
+	switch toRender.(type) {
 	case error:
-		i = struct {
+		toRender = struct {
 			Message string `json:"message"`
 		}{
-			i.(error).Error(),
+			toRender.(error).Error(),
 		}
 	}
 
-	js, err := json.Marshal(i)
+	js, err := json.Marshal(toRender)
 	if err != nil {
 		return err
 	}

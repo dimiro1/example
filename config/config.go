@@ -7,37 +7,22 @@ import (
 )
 
 type Timeouts struct {
-	ReadTimeout  time.Duration `envconfig:"READ_TIMEOUT"`
-	WriteTimeout time.Duration `envconfig:"WRITE_TIMEOUT"`
-	IdleTimeout  time.Duration `envconfig:"IDLE_TIMEOUT"`
+	ReadTimeout  time.Duration `envconfig:"READ_TIMEOUT" default:"5s" desc:"tcp connection read timeout"`
+	WriteTimeout time.Duration `envconfig:"WRITE_TIMEOUT" default:"5s" desc:"tcp connection write timeout"`
+	IdleTimeout  time.Duration `envconfig:"IDLE_TIMEOUT" default:"60s" desc:"tcp connection idle timeout"`
 }
 
 type Config struct {
-	Env         string `envconfig:"ENV"`
-	Port        uint   `envconfig:"PORT"`
-	DatabaseDSN string `envconfig:"DATABASE_DSN"`
+	Env           string `envconfig:"ENV" default:"development" required:"true" desc:"development, test or production"`
+	Port          uint   `envconfig:"PORT" default:"5000" required:"true" desc:"HTTP port to listen"`
+	DatabaseDSN   string `envconfig:"DATABASE_DSN" default:":memory:" required:"true" desc:"database connection DSN"`
+	RunMigrations bool   `envconfig:"RUN_MIGRATIONS" default:"true" desc:"should run migrations on startup?"`
 
 	Timeouts Timeouts
 }
 
-// NewConfig returns a new empty config
-func NewConfig() *Config {
-	return &Config{
-		// We can add defaults here
-		// You can use the envconfig library to set the defaults as well
-		// But it only works for Exported fields
-		Env:         "development",
-		Port:        5000,
-		DatabaseDSN: ":memory:",
-		Timeouts: Timeouts{
-			ReadTimeout:  time.Second * 5,
-			WriteTimeout: time.Second * 5,
-			IdleTimeout:  time.Second * 60,
-		},
-	}
-}
-
-// LoadFromEnv load configuration from env vars
-func (c *Config) LoadFromEnv() error {
-	return envconfig.Process("", c)
+// FromEnv load configuration from env vars
+func FromEnv() (*Config, error) {
+	c := &Config{}
+	return c, envconfig.Process("", c)
 }

@@ -1,24 +1,46 @@
 package app
 
 import (
-	"encoding/xml"
 	"net/http"
 	"strconv"
 
 	"github.com/dimiro1/example/store"
 	ct "github.com/dimiro1/example/toolkit/contenttype"
-	"github.com/dimiro1/example/toolkit/render"
 )
 
 // GET /recipes
 func (a *Application) listRecipes() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		recipes, err := a.recipeLister.All()
-		if err != nil {
-			a.jsonRenderer.Render(w, http.StatusInternalServerError, err)
+		var renderer = a.json
+
+		switch a.contentType.Detect(r) {
+		case ct.XML:
+			renderer = a.xml
+		case ct.JSON:
+			fallthrough
+		case ct.ANY:
+			renderer = a.json
+		default:
+			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "this handler can only accept json or xml"})
 			return
 		}
-		a.jsonRenderer.Render(w, http.StatusOK, recipes)
+
+		storeRecipes, err := a.recipeLister.All()
+		if err != nil {
+			renderer.Render(w, http.StatusInternalServerError, errorResponse{Message: "could not fulfill your request"})
+			return
+		}
+
+		var response []singleRecipeResponse
+		for _, storeRecipe := range storeRecipes {
+			response = append(response, singleRecipeResponse{
+				ID:          strconv.FormatUint(uint64(storeRecipe.ID), 10),
+				Name:        storeRecipe.Name,
+				Description: storeRecipe.Description,
+			})
+		}
+
+		renderer.Render(w, http.StatusOK, storeRecipes)
 	})
 }
 
@@ -29,21 +51,21 @@ func (a *Application) createRecipe() http.HandlerFunc {
 		// Bind
 		// Validate
 		// Logic
-		a.jsonRenderer.Render(w, http.StatusOK, "createRecipe")
+		a.json.Render(w, http.StatusOK, "createRecipe")
 	})
 }
 
 // DELETE /recipes/{id}
 func (a *Application) deleteRecipe() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.jsonRenderer.Render(w, http.StatusOK, "deleteRecipe")
+		a.json.Render(w, http.StatusOK, "deleteRecipe")
 	})
 }
 
 // UPDATE /recipes/{id}
 func (a *Application) updateRecipe() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.jsonRenderer.Render(w, http.StatusOK, "updateRecipe")
+		a.json.Render(w, http.StatusOK, "updateRecipe")
 	})
 }
 
@@ -51,32 +73,22 @@ func (a *Application) updateRecipe() http.HandlerFunc {
 func (a *Application) readRecipe() http.HandlerFunc {
 	// If the struct is only used inside one handler
 	// that is fine to declare it here
-	// Note: Do not use store/db entities as input or output
-	// TODO: Move to it's own file
-	type recipeResponse struct {
-		ID          string `json:"id"`
-		Name        string `json:"name"`
-		Description string `json:"description"`
-	}
-
-	// TODO: Move to it's own file
-	type errorResponse struct {
-		XMLName xml.Name `json:"-" xml:"error"`
-		Message string   `json:"message" xml:"message,attr"`
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var renderer render.Renderer
+		var renderer = a.json
 
 		// Content negotiation
-		a.contentType.Detect(r, func(t string) {
-			switch t {
-			case ct.XML:
-				renderer = a.xmlRenderer
-			case ct.JSON:
-				renderer = a.jsonRenderer
-			}
-		})
+		// You can select the renderer and the binder
+		switch a.contentType.Detect(r) {
+		case ct.XML:
+			renderer = a.xml
+		case ct.JSON:
+			fallthrough
+		case ct.ANY:
+			renderer = a.json
+		default:
+			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "this handler can only accept json or xml"})
+			return
+		}
 
 		id, err := strconv.ParseUint(a.params.ByName(r, "id"), 10, 0)
 		if err != nil {
@@ -86,38 +98,31 @@ func (a *Application) readRecipe() http.HandlerFunc {
 
 		storeRecipe, err := a.recipeFinder.Find(uint(id))
 		if err != nil {
-			var message string
-			var status int
+			var (
+				message = "Internal Server Error"
+				status  = http.StatusInternalServerError
+			)
+
 			if err == store.ErrRecipeNotFound {
 				message = "Not Found"
 				status = http.StatusNotFound
-			} else {
-				message = "Internal Server Error"
-				status = http.StatusInternalServerError
 			}
 
 			renderer.Render(w, status, errorResponse{Message: message})
 			return
 		}
 
-		renderer.Render(w, http.StatusOK, recipeResponse{
+		renderer.Render(w, http.StatusOK, singleRecipeResponse{
 			ID:          strconv.FormatUint(id, 10),
 			Name:        storeRecipe.Name,
 			Description: storeRecipe.Description,
-		}, nil)
+		})
 	})
 }
 
 // GET /recipes/search
 func (a *Application) searchRecipes() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.jsonRenderer.Render(w, http.StatusOK, "searchRecipes")
-	})
-}
-
-// GET /recipes/{id}/recommendations
-func (a *Application) listRecommendations() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.jsonRenderer.Render(w, http.StatusOK, "listRecommendations")
+		a.json.Render(w, http.StatusOK, "searchRecipes")
 	})
 }

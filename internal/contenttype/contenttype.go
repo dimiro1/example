@@ -8,6 +8,11 @@ import (
 // Detect returns the content type of the request body
 func Detect(r *http.Request) string {
 	switch {
+	case r.Header.Get("Accept") == "*/*":
+		return "any"
+	case strings.HasPrefix(r.Header.Get("Accept"), "text/plain"),
+		strings.HasPrefix(r.Header.Get("Content-Type"), "text/plain"):
+		return "text"
 	case strings.HasPrefix(r.Header.Get("Accept"), "text/xml"),
 		strings.HasPrefix(r.Header.Get("Content-Type"), "text/xml"):
 		return "xml"
@@ -16,5 +21,5 @@ func Detect(r *http.Request) string {
 		return "json"
 	}
 
-	return "text"
+	return "any"
 }

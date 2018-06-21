@@ -23,8 +23,7 @@ import (
 
 func main() {
 	// Loading configs
-	cfg := config.NewConfig()
-	err := cfg.LoadFromEnv()
+	cfg, err := config.FromEnv()
 	if err != nil {
 		// Log is not configured
 		// Lets just call the standard panic function
@@ -69,7 +68,7 @@ func main() {
 
 		router.NewGorilla(),
 		params.NewGorilla(),
-		validator.NewSimple(),
+		validator.NewBasic(),
 		binder.JSON{},
 		binder.XML{},
 		render.JSON{},

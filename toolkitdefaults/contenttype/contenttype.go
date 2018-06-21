@@ -8,6 +8,6 @@ import (
 // Detector ...
 type Detector struct{}
 
-func (Detector) Detect(r *http.Request, f func(theType string)) {
-	f(internalContentType.Detect(r))
+func (Detector) Detect(r *http.Request) string {
+	return internalContentType.Detect(r)
 }

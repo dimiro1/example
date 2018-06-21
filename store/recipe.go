@@ -86,16 +86,16 @@ func (d *GormRecipesStore) Find(ID uint) (*Recipe, error) {
 	return r, err
 }
 
-// All TODO: Pagination
+// All TODO: Pagination https://github.com/dimiro1/experiments/blob/master/bestpractices/main.go
 func (d *GormRecipesStore) All() ([]*Recipe, error) {
 	var recipes []*Recipe
-	err := d.db.Find(recipes).Error
+	err := d.db.Find(&recipes).Error
 	return recipes, err
 }
 
 // Search TODO: Pagination
 func (d *GormRecipesStore) Search(query string) ([]*Recipe, error) {
 	var recipes []*Recipe
-	err := d.db.Where("name LIKE ?", fmt.Sprintf("%%%s%%", query)).Find(recipes).Error
+	err := d.db.Where("name LIKE ?", fmt.Sprintf("%%%s%%", query)).Find(&recipes).Error
 	return recipes, err
 }

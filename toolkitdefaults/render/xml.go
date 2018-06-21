@@ -7,18 +7,18 @@ import (
 
 type XML struct{}
 
-func (XML) Render(w http.ResponseWriter, status int, i interface{}, extra ...interface{}) error {
-	switch i.(type) {
+func (XML) Render(w http.ResponseWriter, status int, toRender interface{}, context ...interface{}) error {
+	switch toRender.(type) {
 	case error:
-		i = struct {
+		toRender = struct {
 			XMLName xml.Name `xml:"error"`
 			Message string   `xml:"message,attr"`
 		}{
-			Message: i.(error).Error(),
+			Message: toRender.(error).Error(),
 		}
 	}
 
-	x, err := xml.Marshal(i)
+	x, err := xml.Marshal(toRender)
 	if err != nil {
 		return err
 	}

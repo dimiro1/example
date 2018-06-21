@@ -7,20 +7,20 @@ import (
 
 type Text struct{}
 
-func (Text) Render(w http.ResponseWriter, status int, i interface{}, extra ...interface{}) error {
+func (Text) Render(w http.ResponseWriter, status int, toRender interface{}, context ...interface{}) error {
 	w.Header().Set("Content-Type", "text/plain")
 	var data []byte
 
 	// Specific types
-	switch i.(type) {
+	switch toRender.(type) {
 	case string:
-		data = []byte(i.(string))
+		data = []byte(toRender.(string))
 	case error:
-		data = []byte(i.(error).Error())
+		data = []byte(toRender.(error).Error())
 	}
 
 	// Stringer
-	if s, ok := i.(fmt.Stringer); ok {
+	if s, ok := toRender.(fmt.Stringer); ok {
 		data = []byte(s.String())
 	}
 
