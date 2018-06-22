@@ -13,6 +13,7 @@ func (a *Application) listRecipes() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var renderer = a.json
 
+		// This is optional
 		switch a.contentType.Detect(r) {
 		case ct.XML:
 			renderer = a.xml
@@ -121,8 +122,40 @@ func (a *Application) readRecipe() http.HandlerFunc {
 }
 
 // GET /recipes/search
+//TODO: Pagination, add the next page link in the response header
 func (a *Application) searchRecipes() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.json.Render(w, http.StatusOK, "searchRecipes")
+		var renderer = a.json
+		var query = r.URL.Query().Get("q") // That is fine to use the request directly
+
+		// This is optional
+		switch a.contentType.Detect(r) {
+		case ct.XML:
+			renderer = a.xml
+		case ct.JSON:
+			fallthrough
+		case ct.ANY:
+			renderer = a.json
+		default:
+			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "this handler can only accept json or xml"})
+			return
+		}
+
+		storeRecipes, err := a.recipeSearcher.Search(query)
+		if err != nil {
+			renderer.Render(w, http.StatusInternalServerError, errorResponse{Message: "could not fulfill your request"})
+			return
+		}
+
+		var response []singleRecipeResponse
+		for _, storeRecipe := range storeRecipes {
+			response = append(response, singleRecipeResponse{
+				ID:          strconv.FormatUint(uint64(storeRecipe.ID), 10),
+				Name:        storeRecipe.Name,
+				Description: storeRecipe.Description,
+			})
+		}
+
+		renderer.Render(w, http.StatusOK, storeRecipes)
 	})
 }
