@@ -18,7 +18,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
-	"github.com/dimiro1/example/toolkitdefaults/contenttype"
+	"github.com/dimiro1/example/toolkitdefaults/contentnegotiation"
 )
 
 func main() {
@@ -73,7 +73,7 @@ func main() {
 		binder.XML{},
 		render.JSON{},
 		render.XML{},
-		contenttype.Detector{},
+		contentnegotiation.NewNegotiator(),
 		migrator,
 
 		// Stores

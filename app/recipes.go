@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/dimiro1/example/store"
-	ct "github.com/dimiro1/example/toolkit/contenttype"
+	"github.com/dimiro1/example/toolkit/contentnegotiation/mediatype"
 )
 
 // GET /recipes
@@ -14,12 +14,12 @@ func (a *Application) listRecipes() http.HandlerFunc {
 		var renderer = a.json
 
 		// This is optional
-		switch a.contentType.Detect(r) {
-		case ct.XML:
+		switch a.contentNegotiator.Negotiate(r) {
+		case mediatype.ApplicationXML:
 			renderer = a.xml
-		case ct.JSON:
+		case mediatype.ApplicationJSON:
 			fallthrough
-		case ct.ANY:
+		case mediatype.All:
 			renderer = a.json
 		default:
 			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "this handler can only accept json or xml"})
@@ -79,12 +79,12 @@ func (a *Application) readRecipe() http.HandlerFunc {
 
 		// Content negotiation
 		// You can select the renderer and the binder
-		switch a.contentType.Detect(r) {
-		case ct.XML:
+		switch a.contentNegotiator.Negotiate(r) {
+		case mediatype.ApplicationXML:
 			renderer = a.xml
-		case ct.JSON:
+		case mediatype.ApplicationJSON:
 			fallthrough
-		case ct.ANY:
+		case mediatype.All:
 			renderer = a.json
 		default:
 			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "this handler can only accept json or xml"})
@@ -129,12 +129,12 @@ func (a *Application) searchRecipes() http.HandlerFunc {
 		var query = r.URL.Query().Get("q") // That is fine to use the request directly
 
 		// This is optional
-		switch a.contentType.Detect(r) {
-		case ct.XML:
+		switch a.contentNegotiator.Negotiate(r) {
+		case mediatype.ApplicationXML:
 			renderer = a.xml
-		case ct.JSON:
+		case mediatype.ApplicationJSON:
 			fallthrough
-		case ct.ANY:
+		case mediatype.All:
 			renderer = a.json
 		default:
 			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "this handler can only accept json or xml"})

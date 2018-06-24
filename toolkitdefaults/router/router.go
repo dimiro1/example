@@ -44,7 +44,7 @@ func (r *Gorilla) Routes() []router.Route {
 			return err
 		}
 		for _, method := range methods {
-			path, err := route.GetPathRegexp()
+			path, err := route.GetPathTemplate()
 			if err != nil {
 				return err
 			}

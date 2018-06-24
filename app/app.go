@@ -16,7 +16,7 @@ import (
 	"github.com/dimiro1/example/toolkit/validator"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/dimiro1/example/toolkit/contenttype"
+	"github.com/dimiro1/example/toolkit/contentnegotiation"
 	"github.com/dimiro1/example/toolkit/dict"
 )
 
@@ -57,8 +57,8 @@ type Application struct {
 	xml  render.Renderer
 	json render.Renderer
 
-	// Detect content type
-	contentType contenttype.Detector
+	// Negotiate content type
+	contentNegotiator contentnegotiation.Negotiator
 
 	// Database migrations
 	migrator migration.Migrator
@@ -83,7 +83,7 @@ func NewApplication(
 	xmlBinder binder.Binder,
 	json render.Renderer,
 	xml render.Renderer,
-	contentType contenttype.Detector,
+	contentNegotiator contentnegotiation.Negotiator,
 	migrator migration.Migrator,
 
 	recipeInserter store.RecipeInserter,
@@ -94,22 +94,22 @@ func NewApplication(
 
 	// make it simple to test all the parameters
 	if err := anyNil(dict.M{
-		"config":         config,
-		"logger":         logger,
-		"router":         router,
-		"params":         params,
-		"validator":      validator,
-		"jsonBinder":     jsonBinder,
-		"xmlBinder":      xmlBinder,
-		"json":           json,
-		"xml":            xml,
-		"contentType":    contentType,
-		"migrator":       migrator,
-		"recipeInserter": recipeInserter,
-		"recipeFinder":   recipeFinder,
-		"recipeSearcher": recipeSearcher,
-		"recipeUpdater":  recipeUpdater,
-		"recipeLister":   recipeLister,
+		"config":            config,
+		"logger":            logger,
+		"router":            router,
+		"params":            params,
+		"validator":         validator,
+		"jsonBinder":        jsonBinder,
+		"xmlBinder":         xmlBinder,
+		"json":              json,
+		"xml":               xml,
+		"contentNegotiator": contentNegotiator,
+		"migrator":          migrator,
+		"recipeInserter":    recipeInserter,
+		"recipeFinder":      recipeFinder,
+		"recipeSearcher":    recipeSearcher,
+		"recipeUpdater":     recipeUpdater,
+		"recipeLister":      recipeLister,
 	}); err != nil {
 		return nil, err
 	}
@@ -118,15 +118,15 @@ func NewApplication(
 		config: config,
 		logger: logger,
 
-		router:      router,
-		params:      params,
-		validator:   validator,
-		jsonBinder:  jsonBinder,
-		xmlBinder:   xmlBinder,
-		json:        json,
-		xml:         xml,
-		contentType: contentType,
-		migrator:    migrator,
+		router:            router,
+		params:            params,
+		validator:         validator,
+		jsonBinder:        jsonBinder,
+		xmlBinder:         xmlBinder,
+		json:              json,
+		xml:               xml,
+		contentNegotiator: contentNegotiator,
+		migrator:          migrator,
 
 		recipeInserter: recipeInserter,
 		recipeFinder:   recipeFinder,
@@ -208,6 +208,7 @@ func (a *Application) Start() error {
 		IdleTimeout:  a.config.Timeouts.IdleTimeout,
 	}
 
+	a.logger.Info("listening...")
 	err := server.ListenAndServe()
 	if err != nil {
 		a.logger.WithField("address", address).Error("error serving HTTP")
