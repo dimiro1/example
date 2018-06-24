@@ -4,6 +4,18 @@ import (
 	"net/http"
 )
 
+// Route represents a registered Route
+type Route struct {
+	// Method HTTP Method, GET, POST, DELETE ...
+	Method string
+	// Path rhe registered URL Path
+	Path string
+	// Handler the actual handler
+	Handler http.Handler
+	// HandlerName holds the path/name of the handler inside your code
+	HandlerName string
+}
+
 // Router basic http router definition
 type Router interface {
 	http.Handler
@@ -16,4 +28,7 @@ type Router interface {
 
 	// NotFound handler to be used when there are no routes
 	NotFound(handler http.Handler)
+
+	// Routes returns a list of registered routes
+	Routes() []Route
 }

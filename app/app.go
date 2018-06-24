@@ -189,6 +189,15 @@ func (a *Application) Start() error {
 	a.RegisterRoutes()
 	a.logger.Info("finished Registering routes...")
 
+	a.logger.Info("routes registered...")
+	for _, route := range a.router.Routes() {
+		a.logger.WithFields(log.Fields{
+			"method":  route.Method,
+			"route":   route.Path,
+			"handler": route.HandlerName,
+		}).Info()
+	}
+
 	// This is the only way to safely start a http server
 	// The ListenAndServe does not set timeouts
 	server := &http.Server{

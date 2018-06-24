@@ -2,7 +2,10 @@ package router
 
 import (
 	"net/http"
+	"reflect"
+	"runtime"
 
+	"github.com/dimiro1/example/toolkit/router"
 	"github.com/gorilla/mux"
 )
 
@@ -30,4 +33,31 @@ func (r *Gorilla) HandleFunc(method, path string, handler http.HandlerFunc) {
 
 func (r *Gorilla) NotFound(handler http.Handler) {
 	r.mux.NotFoundHandler = handler
+}
+
+func (r *Gorilla) Routes() []router.Route {
+	var routes []router.Route
+
+	r.mux.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
+		methods, err := route.GetMethods()
+		if err != nil {
+			return err
+		}
+		for _, method := range methods {
+			path, err := route.GetPathRegexp()
+			if err != nil {
+				return err
+			}
+
+			routes = append(routes, router.Route{
+				Method:      method,
+				Path:        path,
+				Handler:     route.GetHandler(),
+				HandlerName: runtime.FuncForPC(reflect.ValueOf(route.GetHandler()).Pointer()).Name(),
+			})
+		}
+		return nil
+	})
+
+	return routes
 }
