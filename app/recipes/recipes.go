@@ -52,12 +52,11 @@ func (r *Recipes) RegisterRoutes(router router.Router) {
 	router.HandleFunc("GET", "/recipes", r.listRecipes())
 	router.HandleFunc("POST", "/recipes", r.createRecipe())
 	router.HandleFunc("GET", "/recipes/{id:[0-9]+}", r.readRecipe())
-	router.HandleFunc("PUT", "/recipes/{id:[0-9]+}", r.updateRecipe())
-	router.HandleFunc("DELETE", "/recipes/{id:[0-9]+}", r.deleteRecipe())
 	router.HandleFunc("GET", "/recipes/search", r.searchRecipes())
 }
 
 func NewRecipes(
+	logger *log.Entry,
 	params params.ParamReader,
 	validator validator.Validator,
 	jsonBinder binder.Binder,
@@ -72,7 +71,8 @@ func NewRecipes(
 	recipeLister store.RecipeLister) (*Recipes, error) {
 
 	// make it simple to test all the parameters
-	if err := anyNil(dict.M{
+	if err := anyNil(dict.Dict{
+		"logger":            logger,
 		"params":            params,
 		"validator":         validator,
 		"jsonBinder":        jsonBinder,
@@ -90,6 +90,7 @@ func NewRecipes(
 	}
 
 	return &Recipes{
+		logger:            logger,
 		params:            params,
 		validator:         validator,
 		jsonBinder:        jsonBinder,
@@ -106,7 +107,7 @@ func NewRecipes(
 	}, nil
 }
 
-func anyNil(items dict.M) error {
+func anyNil(items dict.Dict) error {
 	for k, v := range items {
 		if v == nil {
 			return fmt.Errorf("recipes: %s cannot be nil", k)

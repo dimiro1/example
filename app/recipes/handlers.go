@@ -31,41 +31,72 @@ func (r *Recipes) listRecipes() http.HandlerFunc {
 			return
 		}
 
-		var response []singleRecipeResponse
-		for _, storeRecipe := range storeRecipes {
-			response = append(response, singleRecipeResponse{
+		response := make([]singleRecipe, len(storeRecipes))
+		for i, storeRecipe := range storeRecipes {
+			response[i] = singleRecipe{
 				ID:          strconv.FormatUint(uint64(storeRecipe.ID), 10),
 				Name:        storeRecipe.Name,
 				Description: storeRecipe.Description,
-			})
+			}
 		}
 
-		renderer.Render(w, http.StatusOK, storeRecipes)
+		if err := renderer.Render(w, http.StatusOK, response); err != nil {
+			r.logger.WithError(err).Error("listRecipes")
+		}
 	})
 }
 
 // POST /recipes
 func (r *Recipes) createRecipe() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		// Do not mix database entities with API entities
-		// Bind
-		// Validate
-		// Logic
-		r.json.Render(w, http.StatusOK, "createRecipe")
-	})
-}
+		var renderer = r.json
+		var binder = r.jsonBinder
 
-// DELETE /recipes/{id}
-func (r *Recipes) deleteRecipe() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		r.json.Render(w, http.StatusOK, "deleteRecipe")
-	})
-}
+		// This is optional
+		switch r.contentNegotiator.Negotiate(req) {
+		case "application/xml", "text/xml":
+			renderer = r.xml
+			binder = r.xmlBinder
+		case "application/json":
+			fallthrough
+		case "*/*":
+			renderer = r.json
+			binder = r.jsonBinder
+		default:
+			renderer.Render(w, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
+			return
+		}
 
-// UPDATE /recipes/{id}
-func (r *Recipes) updateRecipe() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		r.json.Render(w, http.StatusOK, "updateRecipe")
+		var input singleRecipe
+		if err := binder.Bind(req, &input); err != nil {
+			// TODO: better error message
+			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "invalid input"})
+			return
+		}
+
+		isValid, err := r.validator.Validate(input)
+		if !isValid {
+			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: err.Error()})
+			return
+		}
+
+		recipe := store.Recipe{
+			Name:        input.Name,
+			Description: input.Description,
+		}
+		if err := r.recipeInserter.Insert(&recipe); err != nil {
+			r.logger.WithError(err).Error("error inserting into database")
+			renderer.Render(w, http.StatusInternalServerError, errorResponse{Message: "error inserting into database"})
+			return
+		}
+
+		if err := r.json.Render(w, http.StatusOK, singleRecipe{
+			ID:          strconv.FormatUint(uint64(recipe.ID), 10),
+			Name:        recipe.Name,
+			Description: recipe.Description,
+		}); err != nil {
+			r.logger.WithError(err).Error("createRecipe")
+		}
 	})
 }
 
@@ -76,8 +107,6 @@ func (r *Recipes) readRecipe() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		var renderer = r.json
 
-		// Content negotiation
-		// You can select the renderer and the binder
 		switch r.contentNegotiator.Negotiate(req) {
 		case "application/xml", "text/xml":
 			renderer = r.xml
@@ -112,11 +141,13 @@ func (r *Recipes) readRecipe() http.HandlerFunc {
 			return
 		}
 
-		renderer.Render(w, http.StatusOK, singleRecipeResponse{
+		if err := renderer.Render(w, http.StatusOK, singleRecipe{
 			ID:          strconv.FormatUint(id, 10),
 			Name:        storeRecipe.Name,
 			Description: storeRecipe.Description,
-		})
+		}); err != nil {
+			r.logger.WithError(err).Error("readRecipe")
+		}
 	})
 }
 
@@ -146,15 +177,17 @@ func (r *Recipes) searchRecipes() http.HandlerFunc {
 			return
 		}
 
-		var response []singleRecipeResponse
-		for _, storeRecipe := range storeRecipes {
-			response = append(response, singleRecipeResponse{
+		response := make([]singleRecipe, len(storeRecipes))
+		for i, storeRecipe := range storeRecipes {
+			response[i] = singleRecipe{
 				ID:          strconv.FormatUint(uint64(storeRecipe.ID), 10),
 				Name:        storeRecipe.Name,
 				Description: storeRecipe.Description,
-			})
+			}
 		}
 
-		renderer.Render(w, http.StatusOK, storeRecipes)
+		if err := renderer.Render(w, http.StatusOK, response); err != nil {
+			r.logger.WithError(err).Error("searchRecipes")
+		}
 	})
 }

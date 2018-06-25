@@ -1,4 +1,4 @@
 package dict
 
-// M is just a helper type
-type M map[string]interface{}
+// Dict is just a helper type
+type Dict map[string]interface{}
