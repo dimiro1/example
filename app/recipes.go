@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/dimiro1/example/store"
-	"github.com/dimiro1/example/toolkit/contentnegotiation/mediatype"
+	"github.com/dimiro1/example/toolkit/mediatype"
 )
 
 // GET /recipes

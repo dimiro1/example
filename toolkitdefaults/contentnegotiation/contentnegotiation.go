@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dimiro1/example/toolkit/contentnegotiation/mediatype"
+	"github.com/dimiro1/example/toolkit/mediatype"
 )
 
 // Negotiator ...
@@ -12,7 +12,7 @@ type Negotiator struct {
 	// default: mediaType
 	parameterName string
 	// default application/json
-	mediaType mediatype.MediaType
+	mediaType string
 }
 
 // Option ...
@@ -24,15 +24,15 @@ func ParameterName(name string) Option {
 }
 
 // MediaType option function to change the parameterName
-func MediaType(mediaType mediatype.MediaType) Option {
+func MediaType(mediaType string) Option {
 	return Option(func(n *Negotiator) { n.mediaType = mediaType })
 }
 
 // Negotiate basic implementation, first check the parameter on the querystring and after the Accept header
 // TODO: Deal with priorities in the Accept header
-func (n *Negotiator) Negotiate(r *http.Request) mediatype.MediaType {
+func (n *Negotiator) Negotiate(r *http.Request) string {
 	// The format parameter
-	ext := map[string]mediatype.MediaType{
+	ext := map[string]string{
 		"atom":  mediatype.ApplicationAtomXML,
 		"pdf":   mediatype.ApplicationPDF,
 		"json":  mediatype.ApplicationJSON,
@@ -57,26 +57,26 @@ func (n *Negotiator) Negotiate(r *http.Request) mediatype.MediaType {
 
 	// Accept header
 	acceptHeader := r.Header.Get("Accept")
-	types := map[string]mediatype.MediaType{
-		mediatype.ApplicationAtomXML.String():        mediatype.ApplicationAtomXML,
-		mediatype.ApplicationFormURLEncoded.String(): mediatype.ApplicationFormURLEncoded,
-		mediatype.ApplicationPDF.String():            mediatype.ApplicationPDF,
-		mediatype.ApplicationOctetStream.String():    mediatype.ApplicationOctetStream,
-		mediatype.ApplicationJSON.String():           mediatype.ApplicationJSON,
-		mediatype.ApplicationRSSXML.String():         mediatype.ApplicationRSSXML,
-		mediatype.ApplicationXHTMLXML.String():       mediatype.ApplicationXHTMLXML,
-		mediatype.ApplicationXML.String():            mediatype.ApplicationXML,
-		mediatype.ImageGif.String():                  mediatype.ImageGif,
-		mediatype.ImageJpeg.String():                 mediatype.ImageJpeg,
-		mediatype.ImagePng.String():                  mediatype.ImagePng,
-		mediatype.TextHTML.String():                  mediatype.TextHTML,
-		mediatype.TextMarkdown.String():              mediatype.TextMarkdown,
-		mediatype.TextPlain.String():                 mediatype.TextPlain,
-		mediatype.TextXML.String():                   mediatype.ApplicationXML, // Special case
+	types := map[string]string{
+		mediatype.ApplicationAtomXML:        mediatype.ApplicationAtomXML,
+		mediatype.ApplicationFormURLEncoded: mediatype.ApplicationFormURLEncoded,
+		mediatype.ApplicationPDF:            mediatype.ApplicationPDF,
+		mediatype.ApplicationOctetStream:    mediatype.ApplicationOctetStream,
+		mediatype.ApplicationJSON:           mediatype.ApplicationJSON,
+		mediatype.ApplicationRSSXML:         mediatype.ApplicationRSSXML,
+		mediatype.ApplicationXHTMLXML:       mediatype.ApplicationXHTMLXML,
+		mediatype.ApplicationXML:            mediatype.ApplicationXML,
+		mediatype.ImageGif:                  mediatype.ImageGif,
+		mediatype.ImageJpeg:                 mediatype.ImageJpeg,
+		mediatype.ImagePng:                  mediatype.ImagePng,
+		mediatype.TextHTML:                  mediatype.TextHTML,
+		mediatype.TextMarkdown:              mediatype.TextMarkdown,
+		mediatype.TextPlain:                 mediatype.TextPlain,
+		mediatype.TextXML:                   mediatype.ApplicationXML, // Special case
 	}
 
 	// return the default
-	if strings.Contains(acceptHeader, mediatype.All.String()) {
+	if strings.Contains(acceptHeader, mediatype.All) {
 		return n.mediaType
 	}
 
