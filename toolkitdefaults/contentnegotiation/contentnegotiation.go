@@ -3,6 +3,7 @@ package contentnegotiation
 import (
 	"net/http"
 	"strings"
+
 	"github.com/dimiro1/example/toolkit/contentnegotiation/mediatype"
 )
 
@@ -88,7 +89,7 @@ func (n *Negotiator) Negotiate(r *http.Request) mediatype.MediaType {
 	return n.mediaType
 }
 
-func NewNegotiator(options ... Option) *Negotiator {
+func NewNegotiator(options ...Option) *Negotiator {
 	n := &Negotiator{"mediaType", mediatype.ApplicationJSON}
 
 	for _, option := range options {

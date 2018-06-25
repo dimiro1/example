@@ -22,7 +22,7 @@ func (a *Application) listRecipes() http.HandlerFunc {
 		case mediatype.All:
 			renderer = a.json
 		default:
-			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "this handler can only accept json or xml"})
+			renderer.Render(w, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
 			return
 		}
 
@@ -87,7 +87,7 @@ func (a *Application) readRecipe() http.HandlerFunc {
 		case mediatype.All:
 			renderer = a.json
 		default:
-			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "this handler can only accept json or xml"})
+			renderer.Render(w, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
 			return
 		}
 
@@ -137,7 +137,7 @@ func (a *Application) searchRecipes() http.HandlerFunc {
 		case mediatype.All:
 			renderer = a.json
 		default:
-			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "this handler can only accept json or xml"})
+			renderer.Render(w, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
 			return
 		}
 
