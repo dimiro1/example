@@ -1,32 +1,31 @@
-package app
+package recipes
 
 import (
 	"net/http"
 	"strconv"
 
 	"github.com/dimiro1/example/store"
-	"github.com/dimiro1/example/toolkit/mediatype"
 )
 
 // GET /recipes
-func (a *Application) listRecipes() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var renderer = a.json
+func (r *Recipes) listRecipes() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		var renderer = r.json
 
 		// This is optional
-		switch a.contentNegotiator.Negotiate(r) {
-		case mediatype.ApplicationXML:
-			renderer = a.xml
-		case mediatype.ApplicationJSON:
+		switch r.contentNegotiator.Negotiate(req) {
+		case "application/xml", "text/xml":
+			renderer = r.xml
+		case "application/json":
 			fallthrough
-		case mediatype.All:
-			renderer = a.json
+		case "*/*":
+			renderer = r.json
 		default:
 			renderer.Render(w, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
 			return
 		}
 
-		storeRecipes, err := a.recipeLister.All()
+		storeRecipes, err := r.recipeLister.All()
 		if err != nil {
 			renderer.Render(w, http.StatusInternalServerError, errorResponse{Message: "could not fulfill your request"})
 			return
@@ -46,58 +45,58 @@ func (a *Application) listRecipes() http.HandlerFunc {
 }
 
 // POST /recipes
-func (a *Application) createRecipe() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (r *Recipes) createRecipe() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// Do not mix database entities with API entities
 		// Bind
 		// Validate
 		// Logic
-		a.json.Render(w, http.StatusOK, "createRecipe")
+		r.json.Render(w, http.StatusOK, "createRecipe")
 	})
 }
 
 // DELETE /recipes/{id}
-func (a *Application) deleteRecipe() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.json.Render(w, http.StatusOK, "deleteRecipe")
+func (r *Recipes) deleteRecipe() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		r.json.Render(w, http.StatusOK, "deleteRecipe")
 	})
 }
 
 // UPDATE /recipes/{id}
-func (a *Application) updateRecipe() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.json.Render(w, http.StatusOK, "updateRecipe")
+func (r *Recipes) updateRecipe() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		r.json.Render(w, http.StatusOK, "updateRecipe")
 	})
 }
 
 // GET /recipes/{id}
-func (a *Application) readRecipe() http.HandlerFunc {
+func (r *Recipes) readRecipe() http.HandlerFunc {
 	// If the struct is only used inside one handler
 	// that is fine to declare it here
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var renderer = a.json
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		var renderer = r.json
 
 		// Content negotiation
 		// You can select the renderer and the binder
-		switch a.contentNegotiator.Negotiate(r) {
-		case mediatype.ApplicationXML:
-			renderer = a.xml
-		case mediatype.ApplicationJSON:
+		switch r.contentNegotiator.Negotiate(req) {
+		case "application/xml", "text/xml":
+			renderer = r.xml
+		case "application/json":
 			fallthrough
-		case mediatype.All:
-			renderer = a.json
+		case "*/*":
+			renderer = r.json
 		default:
 			renderer.Render(w, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
 			return
 		}
 
-		id, err := strconv.ParseUint(a.params.ByName(r, "id"), 10, 0)
+		id, err := strconv.ParseUint(r.params.ByName(req, "id"), 10, 0)
 		if err != nil {
 			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "id must be a positive number"})
 			return
 		}
 
-		storeRecipe, err := a.recipeFinder.Find(uint(id))
+		storeRecipe, err := r.recipeFinder.Find(uint(id))
 		if err != nil {
 			var (
 				message = "Internal Server Error"
@@ -123,25 +122,25 @@ func (a *Application) readRecipe() http.HandlerFunc {
 
 // GET /recipes/search
 //TODO: Pagination, add the next page link in the response header
-func (a *Application) searchRecipes() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var renderer = a.json
-		var query = r.URL.Query().Get("q") // That is fine to use the request directly
+func (r *Recipes) searchRecipes() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		var renderer = r.json
+		var query = req.URL.Query().Get("q") // That is fine to use the request directly
 
 		// This is optional
-		switch a.contentNegotiator.Negotiate(r) {
-		case mediatype.ApplicationXML:
-			renderer = a.xml
-		case mediatype.ApplicationJSON:
+		switch r.contentNegotiator.Negotiate(req) {
+		case "application/xml", "text/xml":
+			renderer = r.xml
+		case "application/json":
 			fallthrough
-		case mediatype.All:
-			renderer = a.json
+		case "*/*":
+			renderer = r.json
 		default:
 			renderer.Render(w, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
 			return
 		}
 
-		storeRecipes, err := a.recipeSearcher.Search(query)
+		storeRecipes, err := r.recipeSearcher.Search(query)
 		if err != nil {
 			renderer.Render(w, http.StatusInternalServerError, errorResponse{Message: "could not fulfill your request"})
 			return

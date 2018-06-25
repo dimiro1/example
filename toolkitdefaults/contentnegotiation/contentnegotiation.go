@@ -4,93 +4,75 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dimiro1/example/toolkit/mediatype"
+	"mime"
+
+	"github.com/dimiro1/example/toolkitdefaults/contentnegotiation/internal/httputil"
 )
 
 // Negotiator ...
 type Negotiator struct {
-	// default: mediaType
+	// default: _format
 	parameterName string
 	// default application/json
-	mediaType string
+	defaultType string
+
+	offers []string
 }
 
 // Option ...
 type Option func(*Negotiator)
 
 // ParameterName option function to change the parameterName
-func ParameterName(name string) Option {
-	return Option(func(n *Negotiator) { n.parameterName = name })
+//noinspection GoUnusedExportedFunction
+func ParameterName(parameterName string) Option {
+	return Option(func(n *Negotiator) { n.parameterName = parameterName })
 }
 
-// MediaType option function to change the parameterName
-func MediaType(mediaType string) Option {
-	return Option(func(n *Negotiator) { n.mediaType = mediaType })
+// DefaultType option function to change the parameterName
+func DefaultType(mime string) Option {
+	return Option(func(n *Negotiator) { n.defaultType = mime })
+}
+
+func Offers(offers ...string) Option {
+	return Option(func(n *Negotiator) { n.offers = offers })
 }
 
 // Negotiate basic implementation, first check the parameter on the querystring and after the Accept header
-// TODO: Deal with priorities in the Accept header
 func (n *Negotiator) Negotiate(r *http.Request) string {
-	// The format parameter
-	ext := map[string]string{
-		"atom":  mediatype.ApplicationAtomXML,
-		"pdf":   mediatype.ApplicationPDF,
-		"json":  mediatype.ApplicationJSON,
-		"rss":   mediatype.ApplicationRSSXML,
-		"xhtml": mediatype.ApplicationXHTMLXML,
-		"xml":   mediatype.ApplicationXML,
-		"gif":   mediatype.ImageGif,
-		"jpeg":  mediatype.ImageJpeg,
-		"jpg":   mediatype.ImageJpeg,
-		"png":   mediatype.ImagePng,
-		"txt":   mediatype.TextHTML,
-		"md":    mediatype.TextMarkdown,
-		"html":  mediatype.TextHTML,
-	}
-
-	parameter := r.URL.Query().Get(n.parameterName)
-	for value, tType := range ext {
-		if strings.HasPrefix(parameter, value) {
-			return tType
+	ext := r.URL.Query().Get(n.parameterName)
+	if len(ext) != 0 {
+		if !strings.HasPrefix(ext, ".") {
+			ext = "." + ext
 		}
+		// Should we return */* ?
+		return mime.TypeByExtension(ext)
 	}
 
-	// Accept header
-	acceptHeader := r.Header.Get("Accept")
-	types := map[string]string{
-		mediatype.ApplicationAtomXML:        mediatype.ApplicationAtomXML,
-		mediatype.ApplicationFormURLEncoded: mediatype.ApplicationFormURLEncoded,
-		mediatype.ApplicationPDF:            mediatype.ApplicationPDF,
-		mediatype.ApplicationOctetStream:    mediatype.ApplicationOctetStream,
-		mediatype.ApplicationJSON:           mediatype.ApplicationJSON,
-		mediatype.ApplicationRSSXML:         mediatype.ApplicationRSSXML,
-		mediatype.ApplicationXHTMLXML:       mediatype.ApplicationXHTMLXML,
-		mediatype.ApplicationXML:            mediatype.ApplicationXML,
-		mediatype.ImageGif:                  mediatype.ImageGif,
-		mediatype.ImageJpeg:                 mediatype.ImageJpeg,
-		mediatype.ImagePng:                  mediatype.ImagePng,
-		mediatype.TextHTML:                  mediatype.TextHTML,
-		mediatype.TextMarkdown:              mediatype.TextMarkdown,
-		mediatype.TextPlain:                 mediatype.TextPlain,
-		mediatype.TextXML:                   mediatype.ApplicationXML, // Special case
-	}
+	bestOffer := httputil.NegotiateContentType(r, n.offers, n.defaultType)
 
-	// return the default
-	if strings.Contains(acceptHeader, mediatype.All) {
-		return n.mediaType
-	}
-
-	for value, tType := range types {
-		if strings.HasPrefix(acceptHeader, value) {
-			return tType
-		}
-	}
-
-	return n.mediaType
+	return bestOffer
 }
 
 func NewNegotiator(options ...Option) *Negotiator {
-	n := &Negotiator{"mediaType", mediatype.ApplicationJSON}
+	n := &Negotiator{
+		parameterName: "_format",
+		defaultType:   "application/json",
+		offers: []string{
+			"application/json",
+			"application/xml",
+			"text/xml",
+			"text/html",
+			"application/xhtml+xml",
+			"application/rss+xml",
+			"application/atom+xml",
+			"image/jpeg",
+			"image/png",
+			"image/gif",
+			"text/markdown",
+			"text/plain",
+			"application/pdf",
+		},
+	}
 
 	for _, option := range options {
 		option(n)

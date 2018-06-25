@@ -1,4 +1,4 @@
-package app
+package recipes
 
 // Note: Do not use store/db entities as input or output
 type singleRecipeResponse struct {

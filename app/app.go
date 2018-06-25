@@ -1,23 +1,15 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"sync"
 
 	"github.com/dimiro1/example/config"
-	"github.com/dimiro1/example/store"
-
-	"github.com/dimiro1/example/toolkit/binder"
 	"github.com/dimiro1/example/toolkit/migration"
-	"github.com/dimiro1/example/toolkit/params"
-	"github.com/dimiro1/example/toolkit/render"
+	"github.com/dimiro1/example/toolkit/module"
 	"github.com/dimiro1/example/toolkit/router"
-	"github.com/dimiro1/example/toolkit/validator"
-
 	log "github.com/sirupsen/logrus"
-	"github.com/dimiro1/example/toolkit/contentnegotiation"
-	"github.com/dimiro1/example/toolkit/dict"
 )
 
 // Application holds the application dependencies
@@ -29,110 +21,46 @@ type Application struct {
 	config *config.Config
 	logger *log.Entry
 
-	// Database interfaces/repositories
-	// Separate into smaller interfaces is a good practice, which allows you to easily write unit tests
-	recipeInserter store.RecipeInserter
-	recipeFinder   store.RecipeFinder
-	recipeSearcher store.RecipeSearcher
-	recipeUpdater  store.RecipeUpdater
-	recipeLister   store.RecipeLister
-
-	// html templates
-	// Cache interface
-	// Queue interface
-	// Not global tracer, like NewRelic
-	// Mailer interface
-
-	// Validates a struct
-	validator validator.Validator
-
-	// Bind struct with data from the request
-	jsonBinder binder.Binder
-	xmlBinder  binder.Binder
-
-	// URL parameters extractor
-	params params.ParamReader
-
-	// Renderer
-	xml  render.Renderer
-	json render.Renderer
-
-	// Negotiate content type
-	contentNegotiator contentnegotiation.Negotiator
-
 	// Database migrations
 	migrator migration.Migrator
 
 	// Mux, you are free to use any other router library
 	router router.Router
 
-	// See: https://golang.org/pkg/sync/#Once
-	onceRunMigrations  sync.Once
-	onceRegisterRoutes sync.Once
+	// modules modules attached to this application
+	modules []module.Module
 }
 
 // NewApplication returns a pointer to an Application struct
 func NewApplication(
 	config *config.Config,
 	logger *log.Entry,
-
 	router router.Router,
-	params params.ParamReader,
-	validator validator.Validator,
-	jsonBinder binder.Binder,
-	xmlBinder binder.Binder,
-	json render.Renderer,
-	xml render.Renderer,
-	contentNegotiator contentnegotiation.Negotiator,
 	migrator migration.Migrator,
+	modules ...module.Module) (*Application, error) {
 
-	recipeInserter store.RecipeInserter,
-	recipeFinder store.RecipeFinder,
-	recipeSearcher store.RecipeSearcher,
-	recipeUpdater store.RecipeUpdater,
-	recipeLister store.RecipeLister) (*Application, error) {
+	if config == nil {
+		return nil, errors.New("app: config cannot be nil")
+	}
 
-	// make it simple to test all the parameters
-	if err := anyNil(dict.M{
-		"config":            config,
-		"logger":            logger,
-		"router":            router,
-		"params":            params,
-		"validator":         validator,
-		"jsonBinder":        jsonBinder,
-		"xmlBinder":         xmlBinder,
-		"json":              json,
-		"xml":               xml,
-		"contentNegotiator": contentNegotiator,
-		"migrator":          migrator,
-		"recipeInserter":    recipeInserter,
-		"recipeFinder":      recipeFinder,
-		"recipeSearcher":    recipeSearcher,
-		"recipeUpdater":     recipeUpdater,
-		"recipeLister":      recipeLister,
-	}); err != nil {
-		return nil, err
+	if logger == nil {
+		return nil, errors.New("app: logger cannot be nil")
+	}
+
+	if router == nil {
+		return nil, errors.New("app: router cannot be nil")
+	}
+
+	if migrator == nil {
+		return nil, errors.New("app: migrator cannot be nil")
 	}
 
 	a := &Application{
-		config: config,
-		logger: logger,
-
-		router:            router,
-		params:            params,
-		validator:         validator,
-		jsonBinder:        jsonBinder,
-		xmlBinder:         xmlBinder,
-		json:              json,
-		xml:               xml,
-		contentNegotiator: contentNegotiator,
-		migrator:          migrator,
-
-		recipeInserter: recipeInserter,
-		recipeFinder:   recipeFinder,
-		recipeSearcher: recipeSearcher,
-		recipeUpdater:  recipeUpdater,
-		recipeLister:   recipeLister,
+		config:   config,
+		logger:   logger,
+		router:   router,
+		migrator: migrator,
+		modules:  modules,
 	}
 
 	return a, nil
@@ -140,31 +68,17 @@ func NewApplication(
 
 // RunMigrations run needed migrations
 func (a *Application) RunMigrations() error {
-	var err error
-	a.onceRunMigrations.Do(func() {
-		err = a.migrator.Migrate()
-	})
-	return err
+	return a.migrator.Migrate()
 }
 
 // RegisterRoutes Initialize the routes
-func (a *Application) RegisterRoutes() router.Router {
-	// Make sure that we configure the handlers only once
-	// See: https://golang.org/pkg/sync/#Once
-	a.onceRegisterRoutes.Do(func() {
-		// handlers returning functions, making easier to pass extra parameters
-		a.router.HandleFunc("GET", "/", a.index())
-
-		// Recipes resource
-		a.router.HandleFunc("GET", "/recipes", a.listRecipes())
-		a.router.HandleFunc("POST", "/recipes", a.createRecipe())
-		a.router.HandleFunc("GET", "/recipes/{id:[0-9]+}", a.readRecipe())
-		a.router.HandleFunc("PUT", "/recipes/{id:[0-9]+}", a.updateRecipe())
-		a.router.HandleFunc("DELETE", "/recipes/{id:[0-9]+}", a.deleteRecipe())
-		a.router.HandleFunc("GET", "/recipes/search", a.searchRecipes())
-	})
-
-	return a.router
+func (a *Application) RegisterRoutes() {
+	for _, m := range a.modules {
+		if m == nil {
+			a.logger.WithField("name", m.Name()).Error("could not register module")
+		}
+		m.RegisterRoutes(a.router)
+	}
 }
 
 // Start is responsible to bind to start the application
@@ -213,15 +127,6 @@ func (a *Application) Start() error {
 	if err != nil {
 		a.logger.WithField("address", address).Error("error serving HTTP")
 		return err
-	}
-	return nil
-}
-
-func anyNil(items dict.M) error {
-	for k, v := range items {
-		if v == nil {
-			return fmt.Errorf("app: %s cannot be nil", k)
-		}
 	}
 	return nil
 }
