@@ -21,13 +21,13 @@ func (r *Recipes) listRecipes() http.HandlerFunc {
 		case "*/*":
 			renderer = r.json
 		default:
-			renderer.Render(w, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
+			renderer.Render(w, req, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
 			return
 		}
 
 		storeRecipes, err := r.recipeLister.All()
 		if err != nil {
-			renderer.Render(w, http.StatusInternalServerError, errorResponse{Message: "could not fulfill your request"})
+			renderer.Render(w, req, http.StatusInternalServerError, errorResponse{Message: "could not fulfill your request"})
 			return
 		}
 
@@ -40,7 +40,7 @@ func (r *Recipes) listRecipes() http.HandlerFunc {
 			}
 		}
 
-		if err := renderer.Render(w, http.StatusOK, response); err != nil {
+		if err := renderer.Render(w, req, http.StatusOK, response); err != nil {
 			r.logger.WithError(err).Error("listRecipes")
 		}
 	})
@@ -63,20 +63,20 @@ func (r *Recipes) createRecipe() http.HandlerFunc {
 			renderer = r.json
 			binder = r.jsonBinder
 		default:
-			renderer.Render(w, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
+			renderer.Render(w, req, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
 			return
 		}
 
 		var input singleRecipe
 		if err := binder.Bind(req, &input); err != nil {
 			// TODO: better error message
-			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "invalid input"})
+			renderer.Render(w, req, http.StatusBadRequest, errorResponse{Message: "invalid input"})
 			return
 		}
 
 		isValid, err := r.validator.Validate(input)
 		if !isValid {
-			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: err.Error()})
+			renderer.Render(w, req, http.StatusBadRequest, errorResponse{Message: err.Error()})
 			return
 		}
 
@@ -86,11 +86,11 @@ func (r *Recipes) createRecipe() http.HandlerFunc {
 		}
 		if err := r.recipeInserter.Insert(&recipe); err != nil {
 			r.logger.WithError(err).Error("error inserting into database")
-			renderer.Render(w, http.StatusInternalServerError, errorResponse{Message: "error inserting into database"})
+			renderer.Render(w, req, http.StatusInternalServerError, errorResponse{Message: "error inserting into database"})
 			return
 		}
 
-		if err := r.json.Render(w, http.StatusOK, singleRecipe{
+		if err := r.json.Render(w, req, http.StatusOK, singleRecipe{
 			ID:          strconv.FormatUint(uint64(recipe.ID), 10),
 			Name:        recipe.Name,
 			Description: recipe.Description,
@@ -115,13 +115,13 @@ func (r *Recipes) readRecipe() http.HandlerFunc {
 		case "*/*":
 			renderer = r.json
 		default:
-			renderer.Render(w, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
+			renderer.Render(w, req, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
 			return
 		}
 
 		id, err := strconv.ParseUint(r.params.ByName(req, "id"), 10, 0)
 		if err != nil {
-			renderer.Render(w, http.StatusBadRequest, errorResponse{Message: "id must be a positive number"})
+			renderer.Render(w, req, http.StatusBadRequest, errorResponse{Message: "id must be a positive number"})
 			return
 		}
 
@@ -137,11 +137,11 @@ func (r *Recipes) readRecipe() http.HandlerFunc {
 				status = http.StatusNotFound
 			}
 
-			renderer.Render(w, status, errorResponse{Message: message})
+			renderer.Render(w, req, status, errorResponse{Message: message})
 			return
 		}
 
-		if err := renderer.Render(w, http.StatusOK, singleRecipe{
+		if err := renderer.Render(w, req, http.StatusOK, singleRecipe{
 			ID:          strconv.FormatUint(id, 10),
 			Name:        storeRecipe.Name,
 			Description: storeRecipe.Description,
@@ -167,13 +167,13 @@ func (r *Recipes) searchRecipes() http.HandlerFunc {
 		case "*/*":
 			renderer = r.json
 		default:
-			renderer.Render(w, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
+			renderer.Render(w, req, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
 			return
 		}
 
 		storeRecipes, err := r.recipeSearcher.Search(query)
 		if err != nil {
-			renderer.Render(w, http.StatusInternalServerError, errorResponse{Message: "could not fulfill your request"})
+			renderer.Render(w, req, http.StatusInternalServerError, errorResponse{Message: "could not fulfill your request"})
 			return
 		}
 
@@ -186,7 +186,7 @@ func (r *Recipes) searchRecipes() http.HandlerFunc {
 			}
 		}
 
-		if err := renderer.Render(w, http.StatusOK, response); err != nil {
+		if err := renderer.Render(w, req, http.StatusOK, response); err != nil {
 			r.logger.WithError(err).Error("searchRecipes")
 		}
 	})

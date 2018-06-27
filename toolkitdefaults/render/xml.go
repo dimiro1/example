@@ -7,7 +7,7 @@ import (
 
 type XML struct{}
 
-func (XML) Render(w http.ResponseWriter, status int, toRender interface{}, context ...interface{}) error {
+func (XML) Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, context ...interface{}) error {
 	switch toRender.(type) {
 	case error:
 		toRender = struct {

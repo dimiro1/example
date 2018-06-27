@@ -26,6 +26,6 @@ func NewHome(render render.Renderer) *Home {
 // index render the root page
 func (h *Home) index() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.renderer.Render(w, http.StatusOK, "Welcome")
+		h.renderer.Render(w, r, http.StatusOK, "Welcome")
 	})
 }
