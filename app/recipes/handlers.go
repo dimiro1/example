@@ -10,7 +10,11 @@ import (
 // GET /recipes
 func (r *Recipes) listRecipes() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		var renderer = r.json
+		var (
+			renderer = r.json
+			offset   = r.queryParams.Uint64(req, "offset", 0)
+			limit    = r.queryParams.Uint64(req, "limit", 30)
+		)
 
 		// This is optional
 		switch r.contentNegotiator.Negotiate(req) {
@@ -25,7 +29,7 @@ func (r *Recipes) listRecipes() http.HandlerFunc {
 			return
 		}
 
-		storeRecipes, err := r.recipeLister.All()
+		storeRecipes, err := r.recipeLister.All(offset, limit)
 		if err != nil {
 			renderer.Render(w, req, http.StatusInternalServerError, errorResponse{Message: "could not fulfill your request"})
 			return
@@ -49,8 +53,10 @@ func (r *Recipes) listRecipes() http.HandlerFunc {
 // POST /recipes
 func (r *Recipes) createRecipe() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		var renderer = r.json
-		var binder = r.jsonBinder
+		var (
+			renderer = r.json
+			binder   = r.jsonBinder
+		)
 
 		// This is optional
 		switch r.contentNegotiator.Negotiate(req) {
@@ -105,7 +111,10 @@ func (r *Recipes) readRecipe() http.HandlerFunc {
 	// If the struct is only used inside one handler
 	// that is fine to declare it here
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		var renderer = r.json
+		var (
+			renderer = r.json
+			id       = r.params.Uint64(req, "id", 0)
+		)
 
 		switch r.contentNegotiator.Negotiate(req) {
 		case "application/xml", "text/xml":
@@ -116,12 +125,6 @@ func (r *Recipes) readRecipe() http.HandlerFunc {
 			renderer = r.json
 		default:
 			renderer.Render(w, req, http.StatusUnsupportedMediaType, errorResponse{Message: "this handler can only accept json or xml"})
-			return
-		}
-
-		id, err := strconv.ParseUint(r.params.ByName(req, "id"), 10, 0)
-		if err != nil {
-			renderer.Render(w, req, http.StatusBadRequest, errorResponse{Message: "id must be a positive number"})
 			return
 		}
 
@@ -152,11 +155,16 @@ func (r *Recipes) readRecipe() http.HandlerFunc {
 }
 
 // GET /recipes/search
-//TODO: Pagination, add the next page link in the response header
+//TODO: add the next page link in the response header
 func (r *Recipes) searchRecipes() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		var renderer = r.json
-		var query = req.URL.Query().Get("q") // That is fine to use the request directly
+		var (
+			renderer = r.json
+			query    = r.params.StringParam(req, "q", "")
+			offset   = r.queryParams.Uint64(req, "offset", 0)
+			limit    = r.queryParams.Uint64(req, "limit", 30)
+			err      error
+		)
 
 		// This is optional
 		switch r.contentNegotiator.Negotiate(req) {
@@ -171,7 +179,7 @@ func (r *Recipes) searchRecipes() http.HandlerFunc {
 			return
 		}
 
-		storeRecipes, err := r.recipeSearcher.Search(query)
+		storeRecipes, err := r.recipeSearcher.Search(query, offset, limit)
 		if err != nil {
 			renderer.Render(w, req, http.StatusInternalServerError, errorResponse{Message: "could not fulfill your request"})
 			return

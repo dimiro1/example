@@ -64,7 +64,8 @@ func main() {
 	homeModule := home.NewHome(render.Text{})
 	recipesModule, err := recipes.NewRecipes(
 		logger,
-		params.NewGorilla(),
+		params.Gorilla{},
+		params.Query{},
 		validator.NewBasic(),
 		binder.JSON{},
 		binder.XML{},

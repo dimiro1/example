@@ -7,7 +7,6 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-//noinspection GoUnusedGlobalVariable
 var (
 	// ErrRecipeNotFound not found error
 	ErrRecipeNotFound = errors.New("store: recipe not found")
@@ -23,7 +22,7 @@ type Recipe struct {
 
 // RecipeLister ...
 type RecipeLister interface {
-	All() ([]*Recipe, error)
+	All(offset, limit uint64) ([]*Recipe, error)
 }
 
 // RecipeFinder ...
@@ -33,7 +32,7 @@ type RecipeFinder interface {
 
 // RecipeSearcher ...
 type RecipeSearcher interface {
-	Search(query string) ([]*Recipe, error)
+	Search(query string, offset, limit uint64) ([]*Recipe, error)
 }
 
 // RecipeInserter ...
@@ -86,16 +85,25 @@ func (d *GormRecipesStore) Find(ID uint) (*Recipe, error) {
 	return r, err
 }
 
-// All TODO: Pagination https://github.com/dimiro1/experiments/blob/master/bestpractices/main.go
-func (d *GormRecipesStore) All() ([]*Recipe, error) {
+// All ...
+// TODO: Validate offset and limit
+func (d *GormRecipesStore) All(offset, limit uint64) ([]*Recipe, error) {
 	var recipes []*Recipe
-	err := d.db.Find(&recipes).Error
+	err := d.db.
+		Offset(offset).
+		Limit(limit).
+		Find(&recipes).Error
 	return recipes, err
 }
 
-// Search TODO: Pagination
-func (d *GormRecipesStore) Search(query string) ([]*Recipe, error) {
+// Search ...
+// TODO: Validate offset and limit
+func (d *GormRecipesStore) Search(query string, offset, limit uint64) ([]*Recipe, error) {
 	var recipes []*Recipe
-	err := d.db.Where("name LIKE ?", fmt.Sprintf("%%%s%%", query)).Find(&recipes).Error
+	err := d.db.
+		Offset(offset).
+		Limit(limit).
+		Where("name LIKE ?", fmt.Sprintf("%%%s%%", query)).
+		Find(&recipes).Error
 	return recipes, err
 }
