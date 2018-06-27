@@ -113,7 +113,7 @@ func (r *Recipes) readRecipe() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		var (
 			renderer = r.json
-			id       = r.params.Uint64(req, "id", 0)
+			id       = r.pathParams.Uint64(req, "id", 0)
 		)
 
 		switch r.contentNegotiator.Negotiate(req) {
@@ -160,7 +160,7 @@ func (r *Recipes) searchRecipes() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		var (
 			renderer = r.json
-			query    = r.params.StringParam(req, "q", "")
+			query    = r.pathParams.String(req, "q", "")
 			offset   = r.queryParams.Uint64(req, "offset", 0)
 			limit    = r.queryParams.Uint64(req, "limit", 30)
 			err      error

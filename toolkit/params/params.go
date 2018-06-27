@@ -16,13 +16,12 @@ type HasParamReader interface {
 }
 
 type StringParamReader interface {
-	StringParam(r *http.Request, param string, defaultValue string) string
+	String(r *http.Request, param string, defaultValue string) string
 }
 
 type IntParamReader interface {
 	Int(r *http.Request, param string, defaultValue int) int
 	Int64(r *http.Request, param string, defaultValue int64) int64
-
 	Uint(r *http.Request, param string, defaultValue uint) uint
 	Uint64(r *http.Request, param string, defaultValue uint64) uint64
 }

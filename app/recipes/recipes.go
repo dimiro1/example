@@ -34,7 +34,7 @@ type Recipes struct {
 	xmlBinder  binder.Binder
 
 	// URL parameters extractor
-	params params.ParamReader
+	pathParams params.ParamReader
 	// Query parameters extractor
 	queryParams params.ParamReader
 
@@ -59,7 +59,7 @@ func (r *Recipes) RegisterRoutes(router router.Router) {
 
 func NewRecipes(
 	logger *log.Entry,
-	params params.ParamReader,
+	pathParams params.ParamReader,
 	queryParams params.ParamReader,
 	validator validator.Validator,
 	jsonBinder binder.Binder,
@@ -76,7 +76,7 @@ func NewRecipes(
 	// make it simple to test all the parameters
 	if err := anyNil(dict.Dict{
 		"logger":            logger,
-		"params":            params,
+		"pathParams":        pathParams,
 		"queryParams":       queryParams,
 		"validator":         validator,
 		"jsonBinder":        jsonBinder,
@@ -95,7 +95,7 @@ func NewRecipes(
 
 	return &Recipes{
 		logger:            logger,
-		params:            params,
+		pathParams:        pathParams,
 		queryParams:       queryParams,
 		validator:         validator,
 		jsonBinder:        jsonBinder,
