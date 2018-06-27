@@ -5,19 +5,17 @@ import (
 	"os"
 
 	"github.com/dimiro1/example/app"
-	"github.com/dimiro1/example/config"
-	"github.com/dimiro1/example/store"
-
-	"github.com/dimiro1/example/toolkitdefaults/binder"
-	"github.com/dimiro1/example/toolkitdefaults/params"
-	"github.com/dimiro1/example/toolkitdefaults/render"
-	"github.com/dimiro1/example/toolkitdefaults/validator"
-
-	// database driver
 	"github.com/dimiro1/example/app/home"
 	"github.com/dimiro1/example/app/recipes"
+	"github.com/dimiro1/example/config"
+	"github.com/dimiro1/example/store"
+	"github.com/dimiro1/example/toolkitdefaults/binder"
 	"github.com/dimiro1/example/toolkitdefaults/contentnegotiation"
+	"github.com/dimiro1/example/toolkitdefaults/params"
+	"github.com/dimiro1/example/toolkitdefaults/render"
 	"github.com/dimiro1/example/toolkitdefaults/router"
+	"github.com/dimiro1/example/toolkitdefaults/validator"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
