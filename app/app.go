@@ -77,7 +77,9 @@ func (a *Application) RegisterRoutes() {
 		if m == nil {
 			a.logger.WithField("name", m.Name()).Error("could not register module")
 		}
+		a.logger.WithField("name", m.Name()).Debug("registering module...")
 		m.RegisterRoutes(a.router)
+		a.logger.WithField("name", m.Name()).Debug("module registered...")
 	}
 }
 
@@ -90,18 +92,18 @@ func (a *Application) Start() error {
 	a.logger.Infof("starting application...")
 
 	if a.config.RunMigrations {
-		a.logger.Info("running migrations...")
+		a.logger.Debug("running migrations...")
 		if err := a.RunMigrations(); err != nil {
 			a.logger.Error("error running migrations")
 			return err
 		}
-		a.logger.Info("finished Running migrations...")
+		a.logger.Debug("finished Running migrations...")
 	}
 
 	// Initializing routes
-	a.logger.Info("registering routes...")
+	a.logger.Debug("registering routes...")
 	a.RegisterRoutes()
-	a.logger.Info("finished Registering routes...")
+	a.logger.Debug("finished Registering routes...")
 
 	a.logger.Info("routes registered...")
 	for _, route := range a.router.Routes() {
