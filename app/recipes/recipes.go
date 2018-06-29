@@ -1,8 +1,6 @@
 package recipes
 
 import (
-	"fmt"
-
 	"github.com/dimiro1/example/store"
 	"github.com/dimiro1/example/toolkit/binder"
 	"github.com/dimiro1/example/toolkit/contentnegotiation"
@@ -11,6 +9,7 @@ import (
 	"github.com/dimiro1/example/toolkit/render"
 	"github.com/dimiro1/example/toolkit/router"
 	"github.com/dimiro1/example/toolkit/validator"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -115,7 +114,7 @@ func NewRecipes(
 func anyNil(items dict.Dict) error {
 	for k, v := range items {
 		if v == nil {
-			return fmt.Errorf("recipes: %s cannot be nil", k)
+			return errors.Errorf("recipes: %s cannot be nil", k)
 		}
 	}
 	return nil

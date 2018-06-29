@@ -39,6 +39,10 @@ func Offers(offers ...string) Option {
 
 // Negotiate basic implementation, first check the parameter on the querystring and after the Accept header
 func (n *Negotiator) Negotiate(r *http.Request) string {
+	if r == nil {
+		// log error? panic? return the error?
+		return ""
+	}
 	ext := r.URL.Query().Get(n.parameterName)
 	if len(ext) != 0 {
 		if !strings.HasPrefix(ext, ".") {

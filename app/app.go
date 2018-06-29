@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/dimiro1/example/toolkit/migration"
 	"github.com/dimiro1/example/toolkit/module"
 	"github.com/dimiro1/example/toolkit/router"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -68,7 +68,7 @@ func NewApplication(
 
 // RunMigrations run needed migrations
 func (a *Application) RunMigrations() error {
-	return a.migrator.Migrate()
+	return errors.WithStack(a.migrator.Migrate())
 }
 
 // RegisterRoutes Initialize the routes
@@ -95,7 +95,7 @@ func (a *Application) Start() error {
 		a.logger.Debug("running migrations...")
 		if err := a.RunMigrations(); err != nil {
 			a.logger.Error("error running migrations")
-			return err
+			return errors.WithStack(err)
 		}
 		a.logger.Debug("finished Running migrations...")
 	}
@@ -128,7 +128,7 @@ func (a *Application) Start() error {
 	err := server.ListenAndServe()
 	if err != nil {
 		a.logger.WithField("address", address).Error("error serving HTTP")
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }

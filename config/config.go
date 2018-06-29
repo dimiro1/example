@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/pkg/errors"
 )
 
 type Timeouts struct {
@@ -24,5 +25,5 @@ type Config struct {
 // FromEnv load configuration from env vars
 func FromEnv() (*Config, error) {
 	c := &Config{}
-	return c, envconfig.Process("", c)
+	return c, errors.WithStack(envconfig.Process("", c))
 }

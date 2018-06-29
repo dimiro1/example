@@ -1,17 +1,22 @@
 package render
 
 import (
-	`encoding/xml`
-	`net/http`
+	"encoding/xml"
+	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 type XML struct{}
 
-func (h XML) Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}) error {
-	return h.RenderCtx(w, r, status, toRender, nil)
-}
+func (XML) Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, _ interface{}) error {
+	if w == nil {
+		return errors.New("render: http.ResponseWriter cannot be nil")
+	}
 
-func (XML) RenderCtx(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, context interface{}) error {
+	if r == nil {
+		return errors.New("render: *http.Request cannot be nil")
+	}
 	switch toRender.(type) {
 	case error:
 		toRender = struct {
@@ -24,11 +29,11 @@ func (XML) RenderCtx(w http.ResponseWriter, r *http.Request, status int, toRende
 
 	x, err := xml.Marshal(toRender)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	w.Header().Set("Content-Type", "text/xml")
 	w.WriteHeader(status)
 	_, err = w.Write(x)
-	return err
+	return errors.WithStack(err)
 }

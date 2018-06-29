@@ -1,11 +1,11 @@
 package home
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/dimiro1/example/toolkit/render"
 	"github.com/dimiro1/example/toolkit/router"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -37,7 +37,7 @@ func NewHome(logger *log.Entry, render render.Renderer) (*Home, error) {
 // index render the root page
 func (h *Home) index() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := h.renderer.RenderCtx(w, r, http.StatusOK, "index.tmpl", "Welcome to example"); err != nil {
+		if err := h.renderer.Render(w, r, http.StatusOK, "index.tmpl", "Welcome to example"); err != nil {
 			h.logger.WithError(err).Error("searchRecipes")
 		}
 	})

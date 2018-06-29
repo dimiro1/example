@@ -3,15 +3,21 @@ package render
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 type Text struct{}
 
-func (h Text) Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}) error {
-	return h.RenderCtx(w, r, status, toRender, nil)
-}
+func (Text) Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, _ interface{}) error {
+	if w == nil {
+		return errors.New("render: http.ResponseWriter cannot be nil")
+	}
 
-func (Text) RenderCtx(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, context interface{}) error {
+	if r == nil {
+		return errors.New("render: *http.Request cannot be nil")
+	}
+
 	w.Header().Set("Content-Type", "text/plain")
 	var data []byte
 
@@ -30,5 +36,5 @@ func (Text) RenderCtx(w http.ResponseWriter, r *http.Request, status int, toRend
 
 	w.WriteHeader(status)
 	_, err := w.Write(data)
-	return err
+	return errors.WithStack(err)
 }

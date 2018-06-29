@@ -3,15 +3,21 @@ package render
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 type JSON struct{}
 
-func (h JSON) Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}) error {
-	return h.RenderCtx(w, r, status, toRender, nil)
-}
+func (JSON) Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, _ interface{}) error {
+	if w == nil {
+		return errors.New("render: http.ResponseWriter cannot be nil")
+	}
 
-func (JSON) RenderCtx(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, context interface{}) error {
+	if r == nil {
+		return errors.New("render: *http.Request cannot be nil")
+	}
+
 	switch toRender.(type) {
 	case error:
 		toRender = struct {
@@ -23,11 +29,11 @@ func (JSON) RenderCtx(w http.ResponseWriter, r *http.Request, status int, toRend
 
 	js, err := json.Marshal(toRender)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_, err = w.Write(js)
-	return err
+	return errors.WithStack(err)
 }

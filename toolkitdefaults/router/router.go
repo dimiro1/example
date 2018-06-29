@@ -7,6 +7,7 @@ import (
 
 	"github.com/dimiro1/example/toolkit/router"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 )
 
 type Gorilla struct {
@@ -41,12 +42,12 @@ func (r *Gorilla) Routes() []router.Route {
 	r.mux.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
 		methods, err := route.GetMethods()
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		for _, method := range methods {
 			path, err := route.GetPathTemplate()
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 
 			routes = append(routes, router.Route{

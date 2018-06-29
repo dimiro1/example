@@ -1,9 +1,8 @@
 package store
 
 import (
-	"errors"
-
 	"github.com/jinzhu/gorm"
+	"github.com/pkg/errors"
 )
 
 // GormMigrator ...
@@ -13,7 +12,7 @@ type GormMigrator struct {
 
 // Migrate ...
 func (d *GormMigrator) Migrate() error {
-	return d.db.AutoMigrate(Recipe{}).Error
+	return errors.WithStack(d.db.AutoMigrate(Recipe{}).Error)
 }
 
 // NewGormMigrator ...

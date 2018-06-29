@@ -1,10 +1,10 @@
 package store
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/jinzhu/gorm"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -62,15 +62,15 @@ func NewGormRecipesStore(db *gorm.DB) (*GormRecipesStore, error) {
 func (d *GormRecipesStore) Update(r *Recipe) error {
 	err := d.db.Model(Recipe{}).Update(r).Error
 	if gorm.IsRecordNotFoundError(err) {
-		return ErrRecipeNotFound
+		return errors.WithStack(ErrRecipeNotFound)
 	}
 
-	return err
+	return errors.WithStack(err)
 }
 
 // Insert ...
 func (d *GormRecipesStore) Insert(r *Recipe) error {
-	return d.db.Model(Recipe{}).Create(r).Error
+	return errors.WithStack(d.db.Model(Recipe{}).Create(r).Error)
 }
 
 // Find ...
@@ -80,9 +80,9 @@ func (d *GormRecipesStore) Find(ID uint) (*Recipe, error) {
 
 	err = d.db.Find(r, ID).Error
 	if gorm.IsRecordNotFoundError(err) {
-		return r, ErrRecipeNotFound
+		return r, errors.WithStack(ErrRecipeNotFound)
 	}
-	return r, err
+	return r, errors.WithStack(err)
 }
 
 // All ...
@@ -93,7 +93,7 @@ func (d *GormRecipesStore) All(offset, limit uint64) ([]*Recipe, error) {
 		Offset(offset).
 		Limit(limit).
 		Find(&recipes).Error
-	return recipes, err
+	return recipes, errors.WithStack(err)
 }
 
 // Search ...
@@ -105,5 +105,5 @@ func (d *GormRecipesStore) Search(query string, offset, limit uint64) ([]*Recipe
 		Limit(limit).
 		Where("name LIKE ?", fmt.Sprintf("%%%s%%", query)).
 		Find(&recipes).Error
-	return recipes, err
+	return recipes, errors.WithStack(err)
 }
