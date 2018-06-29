@@ -1,13 +1,17 @@
 package render
 
 import (
-	`encoding/json`
-	`net/http`
+	"encoding/json"
+	"net/http"
 )
 
 type JSON struct{}
 
-func (JSON) Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, context ...interface{}) error {
+func (h JSON) Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}) error {
+	return h.RenderCtx(w, r, status, toRender, nil)
+}
+
+func (JSON) RenderCtx(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, context interface{}) error {
 	switch toRender.(type) {
 	case error:
 		toRender = struct {

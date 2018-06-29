@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"os"
 
 	"github.com/dimiro1/example/app"
@@ -61,7 +62,19 @@ func main() {
 		log.WithError(err).Fatal("failed to create db migrator")
 	}
 
-	homeModule := home.NewHome(render.Text{})
+	templates, err := template.ParseGlob("templates/*")
+	if err != nil {
+		log.WithError(err).Fatal("failed to load templates")
+	}
+
+	homeModule, err := home.NewHome(
+		logger,
+		render.NewHTML(templates),
+	)
+	if err != nil {
+		log.WithError(err).Fatal("failed to create new home module")
+	}
+
 	recipesModule, err := recipes.NewRecipes(
 		logger,
 		params.Gorilla{},

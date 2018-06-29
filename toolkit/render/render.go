@@ -6,8 +6,6 @@ import (
 
 // Renderer ...
 type Renderer interface {
-	// Render ...
-	// context can be used to carry context data for HTML or text templates
-	// note that this context is not from the context std library
-	Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, context ...interface{}) error
+	Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}) error
+	RenderCtx(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, context interface{}) error
 }

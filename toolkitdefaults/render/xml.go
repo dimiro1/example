@@ -7,7 +7,11 @@ import (
 
 type XML struct{}
 
-func (XML) Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, context ...interface{}) error {
+func (h XML) Render(w http.ResponseWriter, r *http.Request, status int, toRender interface{}) error {
+	return h.RenderCtx(w, r, status, toRender, nil)
+}
+
+func (XML) RenderCtx(w http.ResponseWriter, r *http.Request, status int, toRender interface{}, context interface{}) error {
 	switch toRender.(type) {
 	case error:
 		toRender = struct {
