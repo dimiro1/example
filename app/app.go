@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/dimiro1/example/config"
+	"github.com/dimiro1/example/log"
 	"github.com/dimiro1/example/toolkit/migration"
 	"github.com/dimiro1/example/toolkit/module"
 	"github.com/dimiro1/example/toolkit/router"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 // Application holds the application dependencies
@@ -19,7 +19,7 @@ import (
 type Application struct {
 	// Application external configuration
 	config *config.Config
-	logger *log.Entry
+	logger *log.Logger
 
 	// Database migrations
 	migrator migration.Migrator
@@ -34,7 +34,7 @@ type Application struct {
 // NewApplication returns a pointer to an Application struct
 func NewApplication(
 	config *config.Config,
-	logger *log.Entry,
+	logger *log.Logger,
 	router router.Router,
 	migrator migration.Migrator,
 	modules ...module.Module) (*Application, error) {
@@ -75,11 +75,11 @@ func (a *Application) RunMigrations() error {
 func (a *Application) RegisterRoutes() {
 	for _, m := range a.modules {
 		if m == nil {
-			a.logger.WithField("name", m.Name()).Error("could not register module")
+			a.logger.InvalidModule(m.Name())
 		}
-		a.logger.WithField("name", m.Name()).Debug("registering module...")
+		a.logger.RegisteringModule(m.Name())
 		m.RegisterRoutes(a.router)
-		a.logger.WithField("name", m.Name()).Debug("module registered...")
+		a.logger.RegisteredModule(m.Name())
 	}
 }
 
@@ -89,29 +89,24 @@ func (a *Application) RegisterRoutes() {
 func (a *Application) Start() error {
 	address := fmt.Sprintf(":%d", a.config.Port)
 
-	a.logger.Infof("starting application...")
+	a.logger.StartingApplication()
 
 	if a.config.RunMigrations {
-		a.logger.Debug("running migrations...")
+		a.logger.RunningMigrations()
 		if err := a.RunMigrations(); err != nil {
-			a.logger.Error("error running migrations")
+			a.logger.ErrorRunningMigrations()
 			return errors.WithStack(err)
 		}
-		a.logger.Debug("finished Running migrations...")
+		a.logger.FinishedMigrations()
 	}
 
 	// Initializing routes
-	a.logger.Debug("registering routes...")
+	a.logger.RegisteringRoutes()
 	a.RegisterRoutes()
-	a.logger.Debug("finished Registering routes...")
+	a.logger.FinishedRegisteringRoutes()
 
-	a.logger.Info("routes registered...")
 	for _, route := range a.router.Routes() {
-		a.logger.WithFields(log.Fields{
-			"method":  route.Method,
-			"route":   route.Path,
-			"handler": route.HandlerName,
-		}).Info()
+		a.logger.Route(route)
 	}
 
 	// This is the only way to safely start a http server
@@ -124,10 +119,10 @@ func (a *Application) Start() error {
 		IdleTimeout:  a.config.Timeouts.IdleTimeout,
 	}
 
-	a.logger.Info("listening...")
+	a.logger.ListeningHTTP()
 	err := server.ListenAndServe()
 	if err != nil {
-		a.logger.WithField("address", address).Error("error serving HTTP")
+		a.logger.ErrorListeningHTTP(err, address)
 		return errors.WithStack(err)
 	}
 	return nil

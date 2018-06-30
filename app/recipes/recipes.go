@@ -1,6 +1,7 @@
 package recipes
 
 import (
+	"github.com/dimiro1/example/log"
 	"github.com/dimiro1/example/store"
 	"github.com/dimiro1/example/toolkit/binder"
 	"github.com/dimiro1/example/toolkit/contentnegotiation"
@@ -10,12 +11,11 @@ import (
 	"github.com/dimiro1/example/toolkit/router"
 	"github.com/dimiro1/example/toolkit/validator"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 // Module controller
 type Recipes struct {
-	logger *log.Entry
+	logger *log.Logger
 
 	// Database interfaces/repositories
 	// Separate into smaller interfaces is a good practice, which allows you to easily write unit tests
@@ -57,7 +57,7 @@ func (r *Recipes) RegisterRoutes(router router.Router) {
 }
 
 func NewRecipes(
-	logger *log.Entry,
+	logger *log.Logger,
 	pathParams params.ParamReader,
 	queryParams params.ParamReader,
 	validator validator.Validator,

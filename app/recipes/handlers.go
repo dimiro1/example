@@ -45,7 +45,7 @@ func (r *Recipes) listRecipes() http.HandlerFunc {
 		}
 
 		if err := renderer.Render(w, req, http.StatusOK, response, nil); err != nil {
-			r.logger.WithError(err).Error("listRecipes")
+			r.logger.ErrorRendering(err, "Recipes.listRecipes")
 		}
 	})
 }
@@ -92,7 +92,7 @@ func (r *Recipes) createRecipe() http.HandlerFunc {
 			Description: input.Description,
 		}
 		if err := r.recipeInserter.Insert(&recipe); err != nil {
-			r.logger.WithError(err).Error("error inserting into database")
+			r.logger.ErrorDatabase(err)
 			renderer.Render(w, req, http.StatusInternalServerError,
 				errorResponse{Message: "error inserting into database"}, nil)
 			return
@@ -103,7 +103,7 @@ func (r *Recipes) createRecipe() http.HandlerFunc {
 			Name:        recipe.Name,
 			Description: recipe.Description,
 		}, nil); err != nil {
-			r.logger.WithError(err).Error("createRecipe")
+			r.logger.ErrorRendering(err, "Recipes.createRecipe")
 		}
 	})
 }
@@ -152,7 +152,7 @@ func (r *Recipes) readRecipe() http.HandlerFunc {
 			Name:        storeRecipe.Name,
 			Description: storeRecipe.Description,
 		}, nil); err != nil {
-			r.logger.WithError(err).Error("readRecipe")
+			r.logger.ErrorRendering(err, "Recipes.readRecipe")
 		}
 	})
 }
@@ -200,7 +200,7 @@ func (r *Recipes) searchRecipes() http.HandlerFunc {
 		}
 
 		if err := renderer.Render(w, req, http.StatusOK, response, nil); err != nil {
-			r.logger.WithError(err).Error("searchRecipes")
+			r.logger.ErrorRendering(err, "Recipes.searchRecipes")
 		}
 	})
 }

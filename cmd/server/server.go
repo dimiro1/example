@@ -17,9 +17,10 @@ import (
 	"github.com/dimiro1/example/toolkitdefaults/router"
 	"github.com/dimiro1/example/toolkitdefaults/validator"
 
+	"github.com/dimiro1/example/log"
 	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -32,39 +33,41 @@ func main() {
 	}
 
 	// Initializing log
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
-	log.SetFormatter(&log.JSONFormatter{})
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.InfoLevel)
+	logrus.SetFormatter(&logrus.JSONFormatter{})
 
 	if cfg.Env == "development" {
-		log.SetFormatter(&log.TextFormatter{})
-		log.SetLevel(log.DebugLevel)
+		logrus.SetFormatter(&logrus.TextFormatter{})
+		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	logger := log.WithFields(log.Fields{
+	logrusLogger := logrus.WithFields(logrus.Fields{
 		"address": fmt.Sprintf(":%d", cfg.Port),
 		"env":     cfg.Env,
 	})
 
+	logger := log.NewLogger(logrusLogger)
+
 	db, err := gorm.Open("sqlite3", cfg.DatabaseDSN)
 	if err != nil {
-		log.WithError(err).Fatal(err)
+		logger.ErrorOpeningDatabase(err)
 	}
 	defer db.Close()
 
 	recipeStore, err := store.NewGormRecipesStore(db)
 	if err != nil {
-		log.WithError(err).Fatal("failed to create recipe store")
+		logger.ErrorCreatingStore(err, "GormRecipeStore")
 	}
 
 	migrator, err := store.NewGormMigrator(db)
 	if err != nil {
-		log.WithError(err).Fatal("failed to create db migrator")
+		logger.ErrorCreatingMigrator(err)
 	}
 
 	templates, err := template.ParseGlob("templates/*")
 	if err != nil {
-		log.WithError(err).Fatal("failed to load templates")
+		logger.ErrorLoadingTemplates(err, "templates/*")
 	}
 
 	homeModule, err := home.NewHome(
@@ -72,7 +75,7 @@ func main() {
 		render.NewHTML(templates),
 	)
 	if err != nil {
-		log.WithError(err).Fatal("failed to create new home module")
+		logger.ErrorInstantiatingModule(err, "home")
 	}
 
 	recipesModule, err := recipes.NewRecipes(
@@ -95,7 +98,7 @@ func main() {
 		recipeStore,
 	)
 	if err != nil {
-		log.WithError(err).Fatal("failed to create new recipes module")
+		logger.ErrorInstantiatingModule(err, "recipes")
 	}
 
 	// Instantiating the application
@@ -110,12 +113,12 @@ func main() {
 		recipesModule,
 	)
 	if err != nil {
-		log.WithError(err).Fatal("failed to create new application")
+		logger.ErrorCreateApplication(err)
 	}
 
 	// Running the application
 	err = application.Start()
 	if err != nil {
-		log.WithError(err).Fatal("failed to start the application")
+		logger.ErrorStartingApplication(err)
 	}
 }
