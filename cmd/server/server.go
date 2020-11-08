@@ -113,7 +113,7 @@ func main() {
 		recipesModule,
 	)
 	if err != nil {
-		logger.ErrorCreateApplication(err)
+		logger.ErrorCreatingApplication(err)
 	}
 
 	// Running the application

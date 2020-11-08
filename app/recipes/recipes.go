@@ -1,6 +1,8 @@
 package recipes
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/dimiro1/example/log"
 	"github.com/dimiro1/example/store"
 	"github.com/dimiro1/example/toolkit/binder"
@@ -10,7 +12,6 @@ import (
 	"github.com/dimiro1/example/toolkit/render"
 	"github.com/dimiro1/example/toolkit/router"
 	"github.com/dimiro1/example/toolkit/validator"
-	"github.com/pkg/errors"
 )
 
 // Module controller

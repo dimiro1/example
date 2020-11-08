@@ -4,10 +4,12 @@ import (
 	"net/http"
 	"reflect"
 	"runtime"
+	"strings"
 
-	"github.com/dimiro1/example/toolkit/router"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+
+	"github.com/dimiro1/example/toolkit/router"
 )
 
 type Gorilla struct {
@@ -39,7 +41,7 @@ func (r *Gorilla) NotFound(handler http.Handler) {
 func (r *Gorilla) Routes() []router.Route {
 	var routes []router.Route
 
-	r.mux.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
+	_ = r.mux.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
 		methods, err := route.GetMethods()
 		if err != nil {
 			return errors.WithStack(err)
@@ -51,10 +53,13 @@ func (r *Gorilla) Routes() []router.Route {
 			}
 
 			routes = append(routes, router.Route{
-				Method:      method,
-				Path:        path,
-				Handler:     route.GetHandler(),
-				HandlerName: runtime.FuncForPC(reflect.ValueOf(route.GetHandler()).Pointer()).Name(),
+				Method:  method,
+				Path:    path,
+				Handler: route.GetHandler(),
+				HandlerName: strings.TrimPrefix(
+					runtime.FuncForPC(reflect.ValueOf(route.GetHandler()).Pointer()).Name(),
+					"github.com/dimiro1/example",
+				),
 			})
 		}
 		return nil

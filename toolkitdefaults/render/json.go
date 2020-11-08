@@ -18,16 +18,18 @@ func (JSON) Render(w http.ResponseWriter, r *http.Request, status int, toRender 
 		return errors.New("render: *http.Request cannot be nil")
 	}
 
-	switch toRender.(type) {
+	var toRenderResponse interface{}
+
+	switch toRenderType := toRender.(type) {
 	case error:
-		toRender = struct {
+		toRenderResponse = struct {
 			Message string `json:"message"`
 		}{
-			toRender.(error).Error(),
+			toRenderType.Error(),
 		}
 	}
 
-	js, err := json.Marshal(toRender)
+	js, err := json.Marshal(toRenderResponse)
 	if err != nil {
 		return errors.WithStack(err)
 	}

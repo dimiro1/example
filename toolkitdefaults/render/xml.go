@@ -17,17 +17,20 @@ func (XML) Render(w http.ResponseWriter, r *http.Request, status int, toRender i
 	if r == nil {
 		return errors.New("render: *http.Request cannot be nil")
 	}
-	switch toRender.(type) {
+
+	var toRenderResponse interface{}
+
+	switch toRenderType := toRender.(type) {
 	case error:
-		toRender = struct {
+		toRenderResponse = struct {
 			XMLName xml.Name `xml:"error"`
 			Message string   `xml:"message,attr"`
 		}{
-			Message: toRender.(error).Error(),
+			Message: toRenderType.Error(),
 		}
 	}
 
-	x, err := xml.Marshal(toRender)
+	x, err := xml.Marshal(toRenderResponse)
 	if err != nil {
 		return errors.WithStack(err)
 	}

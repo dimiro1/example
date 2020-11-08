@@ -1,3 +1,5 @@
+// Copied from https://github.com/golang/gddo/blob/master/httputil/header/header.go
+
 // Copyright 2013 The Go Authors. All rights reserved.
 //
 // Use of this source code is governed by a BSD-style
@@ -43,8 +45,8 @@ func init() {
 		var t octetType
 		isCtl := c <= 31 || c == 127
 		isChar := 0 <= c && c <= 127
-		isSeparator := strings.IndexRune(" \t\"(),/:;<=>?@[]\\{}", rune(c)) >= 0
-		if strings.IndexRune(" \t\r\n", rune(c)) >= 0 {
+		isSeparator := strings.ContainsRune(" \t\"(),/:;<=>?@[]\\{}", rune(c))
+		if strings.ContainsRune(" \t\r\n", rune(c)) {
 			t |= isSpace
 		}
 		if isChar && !isCtl && !isSeparator {

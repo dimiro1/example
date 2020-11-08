@@ -1,3 +1,4 @@
+// Copied from https://github.com/golang/gddo/blob/master/httputil/negotiate.go
 // Copyright 2013 The Go Authors. All rights reserved.
 //
 // Use of this source code is governed by a BSD-style
@@ -9,7 +10,8 @@ package httputil
 import (
 	"net/http"
 	"strings"
-	"github.com/dimiro1/example/toolkitdefaults/contentnegotiation/internal/header"
+
+	"github.com/dimiro1/example/toolkitdefaults/contentnegotiation/internal/httputil/header"
 )
 
 // NegotiateContentType returns the best offered content type for the request's

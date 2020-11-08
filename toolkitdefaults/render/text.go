@@ -22,11 +22,11 @@ func (Text) Render(w http.ResponseWriter, r *http.Request, status int, toRender 
 	var data []byte
 
 	// Specific types
-	switch toRender.(type) {
+	switch toRenderType := toRender.(type) {
 	case string:
-		data = []byte(toRender.(string))
+		data = []byte(toRenderType)
 	case error:
-		data = []byte(toRender.(error).Error())
+		data = []byte(toRenderType.Error())
 	}
 
 	// Stringer

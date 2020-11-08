@@ -3,10 +3,11 @@ package home
 import (
 	"net/http"
 
+	"github.com/pkg/errors"
+
+	"github.com/dimiro1/example/log"
 	"github.com/dimiro1/example/toolkit/render"
 	"github.com/dimiro1/example/toolkit/router"
-	"github.com/pkg/errors"
-	"github.com/dimiro1/example/log"
 )
 
 type Home struct {
@@ -36,9 +37,9 @@ func NewHome(logger *log.Logger, render render.Renderer) (*Home, error) {
 
 // index render the root page
 func (h *Home) index() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if err := h.renderer.Render(w, r, http.StatusOK, "index.tmpl", "Welcome to example"); err != nil {
 			h.logger.ErrorRendering(err, "Home.index")
 		}
-	})
+	}
 }

@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/pkg/errors"
+
 	"github.com/dimiro1/example/config"
 	"github.com/dimiro1/example/log"
 	"github.com/dimiro1/example/toolkit/migration"
 	"github.com/dimiro1/example/toolkit/module"
 	"github.com/dimiro1/example/toolkit/router"
-	"github.com/pkg/errors"
 )
 
 // Application holds the application dependencies
@@ -75,7 +76,8 @@ func (a *Application) RunMigrations() error {
 func (a *Application) RegisterRoutes() {
 	for _, m := range a.modules {
 		if m == nil {
-			a.logger.InvalidModule(m.Name())
+			a.logger.InvalidModule("nil pointer")
+			continue
 		}
 		a.logger.RegisteringModule(m.Name())
 		m.RegisterRoutes(a.router)

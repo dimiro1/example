@@ -37,7 +37,7 @@ func (l *Logger) ErrorInstantiatingModule(err error, name string) {
 	l.logger.WithError(err).WithField("module", name).Fatal("failed to create module")
 }
 
-func (l *Logger) ErrorCreateApplication(err error) {
+func (l *Logger) ErrorCreatingApplication(err error) {
 	l.logger.WithError(err).Fatal("failed to create application")
 }
 
